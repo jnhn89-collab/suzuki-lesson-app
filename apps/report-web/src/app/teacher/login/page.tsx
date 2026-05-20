@@ -37,7 +37,7 @@ export default async function TeacherLoginPage({
 
         {params.error ? (
           <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">
-            입력값 또는 계정 정보를 확인해 주세요. 코드: {params.error}
+            {getErrorMessage(params.error)}
           </div>
         ) : null}
 
@@ -54,6 +54,23 @@ export default async function TeacherLoginPage({
       </section>
     </main>
   );
+}
+
+function getErrorMessage(code: string) {
+  const messages: Record<string, string> = {
+    "missing-env": "Vercel Supabase 환경변수가 없습니다.",
+    "missing-service-role": "선생님 등록에는 SUPABASE_SERVICE_ROLE_KEY가 필요합니다.",
+    input: "입력값을 확인해 주세요. 이메일과 6자 이상 비밀번호가 필요합니다.",
+    signin: "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.",
+    "signin-after-signup": "계정은 생성됐지만 자동 로그인에 실패했습니다. 다시 로그인해 주세요.",
+    "email-already-exists": "이미 등록된 이메일입니다. 왼쪽 로그인 영역에서 로그인해 주세요.",
+    "weak-password": "비밀번호가 Supabase 보안 기준에 맞지 않습니다. 더 긴 비밀번호를 사용해 주세요.",
+    "invalid-credentials": "이메일 또는 비밀번호가 맞지 않습니다.",
+    "email-auth-error": "Supabase 이메일 인증 설정을 확인해야 합니다.",
+    signup: "계정 생성에 실패했습니다. Supabase Auth 설정을 확인해 주세요.",
+  };
+
+  return messages[code] ?? `입력값 또는 계정 정보를 확인해 주세요. 코드: ${code}`;
 }
 
 function AuthPanel({
