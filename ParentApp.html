@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+.header{background:linear-gradient(135deg,#1e40af,#7c3aed);color:#fff;padding:20px 16px;text-align:center}
+.header h1{font-size:18px;margin-bottom:2px}
+.header p{font-size:11px;color:#c4b5fd}
+.card{background:#fff;border-radius:12px;padding:14px;margin:12px 14px;border:1px solid #e2e8f0}
+.card-title{font-weight:700;font-size:14px;margin-bottom:10px}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;position:sticky;top:0;z-index:99;margin:0}
+.tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font-size:11px;color:#94a3b8;text-align:center;border-bottom:3px solid transparent;font-weight:500}
+.tab.active{color:#7c3aed;border-bottom-color:#7c3aed;font-weight:700}
+.page{display:none;padding:0;max-width:520px;margin:0 auto}
+.page.active{display:block}
+.btn{padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;width:100%}
+.btn-purple{background:#7c3aed;color:#fff}
+select,input{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:8px;font-family:inherit}
+.alert{padding:10px 12px;border-radius:8px;font-size:12px;margin:12px 14px}
+.alert-red{background:#fee2e2;color:#991b1b}
+.alert-green{background:#dcfce7;color:#166534}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.stat-card{border-radius:10px;padding:12px;text-align:center}
+.stat-card .val{font-size:24px;font-weight:800}
+.stat-card .label{font-size:10px;margin-top:2px}
+.score-trend{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.lesson-row{padding:10px 12px;border-radius:8px;margin-bottom:6px}
+.lesson-row:nth-child(odd){background:#f8fafc}
+.empty{text-align:center;padding:30px;color:#9ca3af;font-size:13px}
+.login-box{max-width:320px;margin:40px auto;padding:0 16px}
+.pin-input{text-align:center;font-size:24px;letter-spacing:12px;font-weight:800}
+.progress-bar{background:#e5e7eb;border-radius:6px;height:16px;overflow:hidden;position:relative}
+.progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#7c3aed,#3b82f6)}
+.progress-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+#login-page{display:block}
+#main-content{display:none}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎻 스즈키 레슨 리포트</h1>
+  <p id="header-sub">학부모 포털</p>
+</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="card">
+      <div class="card-title">🔐 로그인</div>
+      <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">학생 선택</label>
+      <select id="login-student"><option value="">로딩 중...</option></select>
+      <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">PIN (4자리)</label>
+      <input type="password" id="login-pin" class="pin-input" maxlength="4" placeholder="····" inputmode="numeric">
+      <button class="btn btn-purple" onclick="doLogin()" style="margin-top:8px">로그인</button>
+      <div id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div id="main-content">
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('report')">📊 리포트</div>
+    <div class="tab" onclick="showTab('lessons')">📝 레슨</div>
+    <div class="tab" onclick="showTab('assignment')">📋 과제</div>
+  </div>
+
+  <!-- REPORT TAB -->
+  <div id="tab-report" class="page active">
+    <div id="report-content"><div class="empty">로딩 중...</div></div>
+  </div>
+
+  <!-- LESSONS TAB -->
+  <div id="tab-lessons" class="page">
+    <div class="card">
+      <div class="card-title">📝 레슨 기록</div>
+      <div id="lessons-list"><div class="empty">로딩 중...</div></div>
+    </div>
+  </div>
+
+  <!-- ASSIGNMENT TAB -->
+  <div id="tab-assignment" class="page">
+    <div id="assignment-content"><div class="empty">로딩 중...</div></div>
+  </div>
+</div>
+
+<script>
+var token = null;
+var studentName = '';
+
+function gas(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function(resolve, reject) {
+    var runner = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+    runner[fn].apply(runner, args);
+  });
+}
+
+// Load student list for login
+gas('api_parentGetStudents').then(function(students) {
+  var sel = document.getElementById('login-student');
+  if (!students || students.length === 0) {
+    sel.innerHTML = '<option value="">학생이 없습니다 (초기설정 필요)</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">-- 학생 선택 --</option>' +
+    students.map(function(s) {
+      return '<option value="' + s.student_id + '">' + s.name + '</option>';
+    }).join('');
+}).catch(function(e) {
+  document.getElementById('login-student').innerHTML = '<option value="">로드 실패: ' + e.message + '</option>';
+});
+
+function doLogin() {
+  var studentId = document.getElementById('login-student').value;
+  var pin = document.getElementById('login-pin').value;
+  if (!studentId || !pin) { showLoginError('학생과 PIN을 입력하세요'); return; }
+
+  gas('api_parentLogin', studentId, pin).then(function(result) {
+    if (result.success) {
+      token = result.token;
+      studentName = result.studentName;
+      document.getElementById('header-sub').textContent = studentName + ' 학부모님';
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+      loadParentData();
+    } else {
+      var msg = result.message || 'PIN이 올바르지 않습니다';
+      if (result.remaining !== undefined) msg += ' (남은 시도: ' + result.remaining + '회)';
+      showLoginError(msg);
+    }
+  }).catch(function(e) { showLoginError(e.message); });
+}
+
+function showLoginError(msg) {
+  document.getElementById('login-error').innerHTML = '<div class="alert-red" style="padding:8px;border-radius:6px;font-size:12px;margin-top:8px">❌ ' + msg + '</div>';
+}
+
+function showTab(name) {
+  document.querySelectorAll('#main-content .page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('tab-' + name).classList.add('active');
+  var idx = {report:0,lessons:1,assignment:2}[name];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+function loadParentData() {
+  // Progress / Report
+  gas('api_parentGetProgress', token).then(function(data) {
+    if (data.error) { document.getElementById('report-content').innerHTML = '<div class="alert alert-red">세션 만료. 다시 로그인하세요.</div>'; return; }
+    renderReport(data);
+  });
+
+  // Lessons
+  gas('api_parentGetLessons', token).then(function(lessons) {
+    if (lessons.error) return;
+    renderLessons(lessons);
+  });
+
+  // Assignment
+  gas('api_parentGetAssignment', token).then(function(assign) {
+    if (assign && !assign.error) renderAssignment(assign);
+    else document.getElementById('assignment-content').innerHTML = '<div class="card"><div class="empty">현재 과제가 없습니다</div></div>';
+  });
+}
+
+function renderReport(data) {
+  var s = data.student;
+  var bp = data.bookProgress;
+  var cats = ['자세','음정','리듬','톤','활','음악성'];
+  var catColors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6'];
+
+  var html = '';
+  
+  // Summary card
+  html += '<div class="card" style="background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:none">';
+  html += '<div style="text-align:center;margin-bottom:10px"><div style="font-size:13px;color:#6b7280">현재 진행</div>';
+  html += '<div style="font-size:18px;font-weight:800;color:#1e293b">Book ' + s.current_book + '</div>';
+  html += '<div style="font-size:12px;color:#6b7280">' + (data.currentPiece ? data.currentPiece.title : s.current_piece_id) + '</div></div>';
+  html += '<div class="progress-bar"><div class="progress-fill" style="width:' + bp.percent + '%"></div>';
+  html += '<div class="progress-text">' + bp.completed + '/' + bp.total + '곡 (' + bp.percent + '%)</div></div>';
+  html += '<div style="text-align:center;margin-top:6px;font-size:11px;color:#6b7280">총 ' + data.totalLessons + '회 레슨</div>';
+  html += '</div>';
+
+  // Score trends
+  if (data.recentScores && data.recentScores.length > 0) {
+    html += '<div class="card"><div class="card-title">📊 최근 점수</div>';
+    var latest = data.recentScores[0].scores;
+    var scoreVals = [latest.posture, latest.intonation, latest.rhythm, latest.tone, latest.bow, latest.musicality];
+    
+    cats.forEach(function(cat, i) {
+      var val = scoreVals[i];
+      var barW = (val / 5 * 100);
+      html += '<div class="score-trend">';
+      html += '<div style="width:8px;height:8px;border-radius:50%;background:' + catColors[i] + '"></div>';
+      html += '<div style="min-width:52px;font-weight:600">' + cat + '</div>';
+      html += '<div style="flex:1;background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden"><div style="width:' + barW + '%;height:100%;background:' + catColors[i] + ';border-radius:4px"></div></div>';
+      html += '<div style="font-weight:800;min-width:24px;text-align:right">' + val + '</div>';
+      html += '</div>';
+    });
+
+    // Radar SVG
+    var cx=100,cy=95,R=70;
+    html += '<div style="text-align:center;margin-top:12px">';
+    html += '<svg viewBox="0 0 200 200" style="width:100%;max-width:200px">';
+    for(var g=1;g<=5;g++){var pts=[];for(var j=0;j<6;j++){var a=Math.PI*2*j/6-Math.PI/2;pts.push((cx+g/5*R*Math.cos(a))+','+(cy+g/5*R*Math.sin(a)));}
+      html+='<polygon points="'+pts.join(' ')+'" fill="none" stroke="#e5e7eb" stroke-width="'+(g===3?1:0.3)+'"/>';}
+    var dp=[];for(var k=0;k<6;k++){var an=Math.PI*2*k/6-Math.PI/2;var r=scoreVals[k]/5*R;dp.push((cx+r*Math.cos(an))+','+(cy+r*Math.sin(an)));
+      html+='<circle cx="'+(cx+r*Math.cos(an))+'" cy="'+(cy+r*Math.sin(an))+'" r="3" fill="#7c3aed"/>';
+      var lx=cx+85*Math.cos(an),ly=cy+85*Math.sin(an);
+      html+='<text x="'+lx+'" y="'+(ly+3)+'" text-anchor="middle" font-size="8" font-weight="600" fill="#374151">'+cats[k]+'</text>';}
+    html+='<polygon points="'+dp.join(' ')+'" fill="rgba(124,58,237,.1)" stroke="#7c3aed" stroke-width="2"/>';
+    html+='</svg></div>';
+    html += '</div>';
+  }
+
+  // Achievements
+  if (data.achievements && data.achievements.length > 0) {
+    html += '<div class="card"><div class="card-title">🏆 성취</div>';
+    data.achievements.forEach(function(a) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6">';
+      html += '<span style="font-size:18px">' + (a.type === 'book_graduation' ? '🎓' : a.type === 'streak' ? '🔥' : '⭐') + '</span>';
+      html += '<div><div style="font-weight:600;font-size:12px">' + a.title + '</div>';
+      html += '<div style="font-size:10px;color:#9ca3af">' + a.achieved_date + '</div></div></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('report-content').innerHTML = html;
+}
+
+function renderLessons(lessons) {
+  var el = document.getElementById('lessons-list');
+  if (!lessons || lessons.length === 0) { el.innerHTML = '<div class="empty">레슨 기록이 없습니다</div>'; return; }
+
+  el.innerHTML = lessons.map(function(l) {
+    var avgColor = parseFloat(l.avg_score) >= 4 ? '#16a34a' : parseFloat(l.avg_score) >= 3 ? '#ca8a04' : '#dc2626';
+    var statusBadge = l.piece_status === 'completed' ? '<span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:600">✓ 완료</span>' : '';
+    return '<div class="lesson-row">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+      '<div><div style="font-weight:600;font-size:13px">#' + l.lesson_num + ' ' + (l.piece_title || l.piece_id) + ' ' + statusBadge + '</div>' +
+      '<div style="font-size:10px;color:#9ca3af">' + l.date + '</div></div>' +
+      '<div style="font-weight:800;font-size:16px;color:' + avgColor + '">' + parseFloat(l.avg_score).toFixed(1) + '</div></div>' +
+      (l.teacher_comment ? '<div style="font-size:11px;color:#475569;margin-top:4px;padding:6px 8px;background:#f8fafc;border-radius:6px;border-left:3px solid #7c3aed">💬 ' + l.teacher_comment + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function renderAssignment(assign) {
+  var html = '<div class="card"><div class="card-title">📋 이번 주 연습 과제</div>';
+  html += '<div style="font-size:11px;color:#9ca3af;margin-bottom:10px">발송일: ' + assign.assigned_date + '</div>';
+  
+  if (assign.scales) html += '<div style="background:#f0f9ff;padding:10px;border-radius:8px;margin-bottom:6px"><div style="font-weight:600;font-size:12px;color:#0369a1;margin-bottom:2px">🎼 음계</div><div style="font-size:12px;color:#475569">' + assign.scales + '</div></div>';
+  if (assign.review_pieces) html += '<div style="background:#f0fdf4;padding:10px;border-radius:8px;margin-bottom:6px"><div style="font-weight:600;font-size:12px;color:#166534;margin-bottom:2px">🔄 복습곡</div><div style="font-size:12px;color:#475569">' + assign.review_pieces + '</div></div>';
+  if (assign.current_piece_sections) html += '<div style="background:#fefce8;padding:10px;border-radius:8px;margin-bottom:6px"><div style="font-weight:600;font-size:12px;color:#854d0e;margin-bottom:2px">📖 진행곡</div><div style="font-size:12px;color:#475569">' + assign.current_piece_sections + '</div></div>';
+  
+  html += '<div class="stat-grid">';
+  html += '<div class="stat-card" style="background:#faf5ff"><div class="val" style="color:#7c3aed">' + (assign.daily_reps || 5) + '회</div><div class="label" style="color:#7c3aed">일일 반복</div></div>';
+  html += '<div class="stat-card" style="background:#fff1f2"><div class="val" style="color:#be123c">' + (assign.daily_minutes || 20) + '분</div><div class="label" style="color:#be123c">일일 목표</div></div>';
+  html += '</div>';
+  if (assign.notes) html += '<div style="margin-top:8px;font-size:11px;color:#6b7280;padding:8px;background:#f9fafb;border-radius:6px">📌 ' + assign.notes + '</div>';
+  html += '</div>';
+  
+  document.getElementById('assignment-content').innerHTML = html;
+}
+</script>
+</body>
+</html>

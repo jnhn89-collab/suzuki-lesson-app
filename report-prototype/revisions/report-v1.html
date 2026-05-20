@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스즈키 레슨 성과보고서 프로토타입</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #172033;
+      background: #eef2f6;
+      font-size: 14px;
+    }
+    button, input, select, textarea { font: inherit; }
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(360px, 440px) minmax(560px, 1fr);
+    }
+    .input-pane {
+      background: #fbfcfe;
+      border-right: 1px solid #d8e0ea;
+      height: 100vh;
+      overflow: auto;
+    }
+    .input-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #172033;
+      color: #fff;
+      padding: 18px 18px 14px;
+    }
+    .input-header h1 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .input-header p {
+      margin: 0;
+      color: #c8d2df;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .section {
+      padding: 16px 18px;
+      border-bottom: 1px solid #e4e9f0;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: 13px;
+      color: #253149;
+    }
+    .hint {
+      font-size: 11px;
+      color: #697589;
+      line-height: 1.45;
+    }
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .field label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #566277;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #ccd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #172033;
+      padding: 9px 10px;
+      outline: none;
+    }
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+    .score-list {
+      display: grid;
+      gap: 8px;
+    }
+    .score-row {
+      display: grid;
+      grid-template-columns: 72px 1fr 28px;
+      gap: 9px;
+      align-items: center;
+    }
+    .score-row label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #404c61;
+    }
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+    }
+    .score-button {
+      height: 31px;
+      border: 1px solid #d4dce7;
+      border-radius: 7px;
+      background: #fff;
+      color: #657083;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .score-button.active {
+      border-color: #172033;
+      background: #172033;
+      color: #fff;
+    }
+    .score-value {
+      font-weight: 900;
+      text-align: right;
+      color: #172033;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      border: 1px solid #d4dce7;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #fff;
+      color: #475266;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: #e8f0ff;
+      border-color: #83a8f8;
+      color: #174ea6;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 14px 18px 22px;
+    }
+    .btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-muted { background: #e7edf5; color: #263247; }
+    .preview-pane {
+      height: 100vh;
+      overflow: auto;
+      padding: 26px;
+    }
+    .report {
+      max-width: 880px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #dce3ec;
+      box-shadow: 0 18px 45px rgba(39, 52, 74, .12);
+    }
+    .report-cover {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 24px;
+      padding: 34px 38px 26px;
+      border-bottom: 1px solid #e6ebf2;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+    }
+    .eyebrow {
+      margin-bottom: 10px;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #2563eb;
+      font-weight: 900;
+    }
+    .report h2 {
+      margin: 0;
+      font-size: 31px;
+      line-height: 1.18;
+      letter-spacing: 0;
+      color: #111827;
+    }
+    .report-sub {
+      margin-top: 12px;
+      color: #566277;
+      line-height: 1.65;
+      font-size: 14px;
+    }
+    .cover-meta {
+      align-self: stretch;
+      display: grid;
+      gap: 8px;
+    }
+    .meta-card {
+      border: 1px solid #e0e6ef;
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #fff;
+    }
+    .meta-label {
+      font-size: 10px;
+      font-weight: 900;
+      color: #7b8698;
+      margin-bottom: 3px;
+    }
+    .meta-value {
+      font-weight: 850;
+      color: #1d2739;
+    }
+    .report-body {
+      padding: 26px 38px 38px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .kpi {
+      border: 1px solid #e0e6ef;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+    .kpi .value {
+      font-size: 23px;
+      font-weight: 900;
+      color: #111827;
+    }
+    .kpi .label {
+      margin-top: 3px;
+      font-size: 11px;
+      color: #687386;
+      font-weight: 700;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .report-section {
+      margin-bottom: 20px;
+    }
+    .report-section h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #111827;
+    }
+    .narrative {
+      border-left: 4px solid #2563eb;
+      padding: 12px 14px;
+      background: #f6f9ff;
+      border-radius: 0 8px 8px 0;
+      line-height: 1.7;
+      color: #303b4f;
+    }
+    .score-bars {
+      display: grid;
+      gap: 9px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 64px 1fr 26px;
+      gap: 9px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .bar-track {
+      height: 9px;
+      background: #e8edf4;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: #2563eb;
+    }
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+    .list-item {
+      border: 1px solid #e4e9f0;
+      border-radius: 8px;
+      padding: 10px 11px;
+      background: #fff;
+      line-height: 1.55;
+    }
+    .list-title {
+      font-size: 12px;
+      font-weight: 900;
+      color: #1f2a3d;
+      margin-bottom: 2px;
+    }
+    .tag-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tag {
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #edf3fb;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .footer-note {
+      margin-top: 24px;
+      border-top: 1px solid #e6ebf2;
+      padding-top: 14px;
+      color: #687386;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #172033;
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: .18s;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (max-width: 980px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .input-pane { height: auto; border-right: 0; }
+      .preview-pane { height: auto; padding: 16px; }
+      .report-cover, .two-col { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media print {
+      body { background: #fff; }
+      .input-pane { display: none; }
+      .app-shell { display: block; }
+      .preview-pane { height: auto; overflow: visible; padding: 0; }
+      .report { border: 0; box-shadow: none; max-width: none; }
+      .toast { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="input-pane">
+      <header class="input-header">
+        <h1>성과보고서 입력</h1>
+        <p>선생님이 한 번 입력하면 학부모용 보고서가 즉시 완성됩니다. 입력값은 이 브라우저에 자동 저장됩니다.</p>
+      </header>
+
+      <section class="section">
+        <div class="section-title">
+          <h2>기본 정보</h2>
+          <span class="hint">보고서 표지에 표시</span>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="studentName">학생 이름</label>
+            <input id="studentName" data-bind="studentName">
+          </div>
+          <div class="field">
+            <label for="ageGroup">연령대</label>
+            <select id="ageGroup" data-bind="ageGroup">
+              <option>4-6</option>
+              <option>6-8</option>
+              <option>8-10</option>
+              <option>10-12</option>
+              <option>12+</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="lessonDate">평가일</label>
+            <input id="lessonDate" type="date" data-bind="lessonDate">
+          </div>
+          <div class="field">
+            <label for="teacherName">담당 선생님</label>
+            <input id="teacherName" data-bind="teacherName">
+          </div>
+        </div>
+        <div class="field">
+          <label for="pieceTitle">평가 곡 / 진도</label>
+          <input id="pieceTitle" data-bind="pieceTitle">
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <h2>루브릭 점수</h2>
+          <span class="hint">1 도움 필요 · 5 자율적</span>
+        </div>
+        <div id="scoreInputs" class="score-list"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <h2>오늘 관찰한 핵심 역량</h2>
+          <span class="hint">최대 4개 권장</span>
+        </div>
+        <div id="focusChips" class="chips"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <h2>교사 코멘트</h2>
+          <span class="hint">보고서 문장 생성에 사용</span>
+        </div>
+        <div class="field">
+          <label for="strengths">잘 된 점</label>
+          <textarea id="strengths" data-bind="strengths"></textarea>
+        </div>
+        <div class="field">
+          <label for="growthArea">다음 성장 포인트</label>
+          <textarea id="growthArea" data-bind="growthArea"></textarea>
+        </div>
+        <div class="field">
+          <label for="homeSupport">가정에서 도와주실 부분</label>
+          <textarea id="homeSupport" data-bind="homeSupport"></textarea>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <h2>이번 주 연습 처방</h2>
+          <span class="hint">학부모가 바로 실행할 내용</span>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="dailyMinutes">하루 목표 시간</label>
+            <input id="dailyMinutes" type="number" min="0" data-bind="dailyMinutes">
+          </div>
+          <div class="field">
+            <label for="dailyReps">반복 횟수</label>
+            <input id="dailyReps" type="number" min="0" data-bind="dailyReps">
+          </div>
+        </div>
+        <div class="field">
+          <label for="practicePlan">구체적 연습 내용</label>
+          <textarea id="practicePlan" data-bind="practicePlan"></textarea>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="printReport">인쇄 / PDF</button>
+        <button class="btn btn-muted" id="resetDemo">샘플 복원</button>
+      </div>
+    </aside>
+
+    <section class="preview-pane">
+      <article class="report" id="report">
+        <div class="report-cover">
+          <div>
+            <div class="eyebrow">Suzuki Violin Progress Report</div>
+            <h2><span data-view="studentName"></span> 성과보고서</h2>
+            <div class="report-sub" id="summaryText"></div>
+          </div>
+          <div class="cover-meta">
+            <div class="meta-card">
+              <div class="meta-label">평가일</div>
+              <div class="meta-value" data-view="lessonDateText"></div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-label">현재 진도</div>
+              <div class="meta-value" data-view="pieceTitle"></div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-label">담당 선생님</div>
+              <div class="meta-value" data-view="teacherName"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="report-body">
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="value" data-view="avgScore"></div>
+              <div class="label">종합 평균</div>
+            </div>
+            <div class="kpi">
+              <div class="value" data-view="topCategory"></div>
+              <div class="label">강점 영역</div>
+            </div>
+            <div class="kpi">
+              <div class="value" data-view="growthCategory"></div>
+              <div class="label">성장 영역</div>
+            </div>
+            <div class="kpi">
+              <div class="value"><span data-view="dailyMinutes"></span>분</div>
+              <div class="label">일일 연습 목표</div>
+            </div>
+          </div>
+
+          <section class="report-section">
+            <h3>종합 평가</h3>
+            <div class="narrative" id="narrative"></div>
+          </section>
+
+          <div class="two-col">
+            <section class="report-section">
+              <h3>영역별 점수</h3>
+              <div id="scoreBars" class="score-bars"></div>
+            </section>
+
+            <section class="report-section">
+              <h3>핵심 학습 포커스</h3>
+              <div id="focusTags" class="tag-line"></div>
+            </section>
+          </div>
+
+          <div class="two-col">
+            <section class="report-section">
+              <h3>이번 레슨에서 잘 된 점</h3>
+              <div class="list">
+                <div class="list-item">
+                  <div class="list-title">관찰 내용</div>
+                  <div data-view="strengths"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="report-section">
+              <h3>다음 성장 포인트</h3>
+              <div class="list">
+                <div class="list-item">
+                  <div class="list-title">다음 레슨까지의 목표</div>
+                  <div data-view="growthArea"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="report-section">
+            <h3>가정 연습 가이드</h3>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-title">이번 주 연습 처방</div>
+                <div><span data-view="dailyMinutes"></span>분씩, 핵심 구간을 <span data-view="dailyReps"></span>회 반복합니다. <span data-view="practicePlan"></span></div>
+              </div>
+              <div class="list-item">
+                <div class="list-title">학부모님 지원 포인트</div>
+                <div data-view="homeSupport"></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="footer-note">
+            이 보고서는 한 번의 레슨 평가를 기반으로 생성되었습니다. 점수는 학생을 비교하기 위한 값이 아니라, 다음 연습 방향을 정하기 위한 성장 지표입니다.
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">자동 저장됨</div>
+
+  <script>
+    const STORAGE_KEY = "suzuki.report.prototype.v1";
+
+    const categories = [
+      { id: "posture", label: "자세" },
+      { id: "intonation", label: "음정" },
+      { id: "rhythm", label: "리듬" },
+      { id: "tone", label: "톤" },
+      { id: "bow", label: "활" },
+      { id: "musicality", label: "음악성" }
+    ];
+
+    const focusOptions = [
+      "활 접촉점", "왼손 모양", "음정 안정", "리듬 유지", "톤 만들기",
+      "프레이징", "보잉 방향", "암보", "느린 연습", "무대 태도"
+    ];
+
+    const sampleState = {
+      studentName: "김지우",
+      ageGroup: "8-10",
+      lessonDate: new Date().toISOString().slice(0, 10),
+      teacherName: "이선생",
+      pieceTitle: "Book 1 · Minuet 1",
+      scores: {
+        posture: 4,
+        intonation: 3,
+        rhythm: 4,
+        tone: 4,
+        bow: 3,
+        musicality: 4
+      },
+      focus: ["활 접촉점", "음정 안정", "프레이징"],
+      strengths: "멜로디의 방향을 이해하고 문장 끝을 자연스럽게 정리했습니다. 자세가 지난 레슨보다 안정되어 긴 프레이즈에서도 소리가 흔들리지 않았습니다.",
+      growthArea: "A현에서 E현으로 넘어갈 때 활 각도가 조금 높아지며 음정과 톤이 동시에 흔들립니다. 현을 바꾸기 전 팔꿈치 높이를 먼저 준비하는 연습이 필요합니다.",
+      homeSupport: "연습을 시작하기 전 30초 동안 활이 브릿지와 평행한지 확인해 주세요. 빠른 속도보다 일정한 소리와 바른 자세를 먼저 칭찬해 주시면 좋습니다.",
+      dailyMinutes: 20,
+      dailyReps: 5,
+      practicePlan: "Minuet 1의 첫 8마디를 느린 템포로 나누어 연습하고, 마지막에는 처음부터 끝까지 한 번 연결합니다."
+    };
+
+    let state = loadState();
+    let toastTimer = null;
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return { ...sampleState, ...JSON.parse(saved) };
+      } catch (error) {}
+      return structuredClone(sampleState);
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      showToast();
+    }
+
+    function showToast() {
+      const toast = document.getElementById("toast");
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 900);
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const date = new Date(value + "T00:00:00");
+      return date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    function avgScore() {
+      const values = categories.map(cat => Number(state.scores[cat.id]) || 0);
+      return values.reduce((sum, value) => sum + value, 0) / values.length;
+    }
+
+    function bestCategory() {
+      return categories.reduce((best, cat) => {
+        return state.scores[cat.id] > state.scores[best.id] ? cat : best;
+      }, categories[0]);
+    }
+
+    function weakestCategory() {
+      return categories.reduce((weakest, cat) => {
+        return state.scores[cat.id] < state.scores[weakest.id] ? cat : weakest;
+      }, categories[0]);
+    }
+
+    function levelText(score) {
+      if (score >= 4.5) return "매우 안정적인 단계";
+      if (score >= 3.8) return "안정적으로 성장 중인 단계";
+      if (score >= 3) return "기초가 자리 잡는 단계";
+      return "세심한 도움이 필요한 단계";
+    }
+
+    function setPath(path, value) {
+      const keys = path.split(".");
+      let target = state;
+      while (keys.length > 1) target = target[keys.shift()];
+      target[keys[0]] = value;
+      render();
+      saveState();
+    }
+
+    function renderInputs() {
+      document.querySelectorAll("[data-bind]").forEach(input => {
+        const key = input.dataset.bind;
+        if (document.activeElement !== input) input.value = state[key] ?? "";
+      });
+
+      const scoreInputs = document.getElementById("scoreInputs");
+      scoreInputs.innerHTML = categories.map(cat => {
+        const buttons = [1, 2, 3, 4, 5].map(score => {
+          const active = state.scores[cat.id] === score ? " active" : "";
+          return `<button class="score-button${active}" data-score="${cat.id}:${score}">${score}</button>`;
+        }).join("");
+        return `
+          <div class="score-row">
+            <label>${cat.label}</label>
+            <div class="segmented">${buttons}</div>
+            <div class="score-value">${state.scores[cat.id]}</div>
+          </div>
+        `;
+      }).join("");
+
+      const focusChips = document.getElementById("focusChips");
+      focusChips.innerHTML = focusOptions.map(option => {
+        const active = state.focus.includes(option) ? " active" : "";
+        return `<button class="chip${active}" data-focus="${option}">${option}</button>`;
+      }).join("");
+    }
+
+    function renderReport() {
+      const average = avgScore();
+      const top = bestCategory();
+      const growth = weakestCategory();
+      const reportValues = {
+        ...state,
+        lessonDateText: formatDate(state.lessonDate),
+        avgScore: average.toFixed(1),
+        topCategory: top.label,
+        growthCategory: growth.label
+      };
+
+      document.querySelectorAll("[data-view]").forEach(node => {
+        const key = node.dataset.view;
+        node.textContent = reportValues[key] ?? "";
+      });
+
+      document.getElementById("summaryText").textContent =
+        `${state.studentName} 학생은 현재 ${state.pieceTitle}을 학습하고 있으며, 이번 평가의 종합 평균은 ${average.toFixed(1)}점입니다. ` +
+        `${top.label} 영역이 가장 안정적이고, 다음 단계에서는 ${growth.label}을 중심으로 연습하면 좋습니다.`;
+
+      document.getElementById("narrative").textContent =
+        `이번 레슨에서 ${state.studentName} 학생은 ${levelText(average)}를 보여주었습니다. ` +
+        `${top.label}은 ${state.scores[top.id]}점으로 강점이 뚜렷하며, ${growth.label}은 ${state.scores[growth.id]}점으로 다음 연습의 우선순위입니다. ` +
+        `선생님 코멘트와 가정 연습 계획을 함께 보면, 이번 주 목표는 좋은 소리를 유지하면서 필요한 동작을 반복 가능한 습관으로 만드는 것입니다.`;
+
+      document.getElementById("scoreBars").innerHTML = categories.map(cat => {
+        const score = Number(state.scores[cat.id]) || 0;
+        return `
+          <div class="bar-row">
+            <div>${cat.label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${score / 5 * 100}%"></div></div>
+            <strong>${score}</strong>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("focusTags").innerHTML = state.focus.length
+        ? state.focus.map(tag => `<span class="tag">${tag}</span>`).join("")
+        : `<span class="hint">선택된 포커스가 없습니다.</span>`;
+    }
+
+    function render() {
+      renderInputs();
+      renderReport();
+    }
+
+    document.addEventListener("input", event => {
+      const key = event.target.dataset.bind;
+      if (!key) return;
+      const numeric = event.target.type === "number";
+      setPath(key, numeric ? Number(event.target.value) : event.target.value);
+    });
+
+    document.addEventListener("click", event => {
+      const scoreTarget = event.target.closest("[data-score]");
+      if (scoreTarget) {
+        const [id, value] = scoreTarget.dataset.score.split(":");
+        setPath(`scores.${id}`, Number(value));
+        return;
+      }
+
+      const focusTarget = event.target.closest("[data-focus]");
+      if (focusTarget) {
+        const value = focusTarget.dataset.focus;
+        state.focus = state.focus.includes(value)
+          ? state.focus.filter(item => item !== value)
+          : [...state.focus, value];
+        render();
+        saveState();
+      }
+    });
+
+    document.getElementById("printReport").addEventListener("click", () => window.print());
+
+    document.getElementById("resetDemo").addEventListener("click", () => {
+      state = structuredClone(sampleState);
+      render();
+      saveState();
+    });
+
+    render();
+  </script>
+</body>
+</html>

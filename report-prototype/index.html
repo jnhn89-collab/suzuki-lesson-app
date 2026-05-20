@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스즈키 레슨 성과보고서</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/variable/woff2/SUIT-Variable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --line: #dce3ec;
+      --paper: #fffdf8;
+      --panel: #f7f9fc;
+      --blue: #2457c5;
+      --green: #16845c;
+      --amber: #b76b00;
+      --soft-blue: #edf4ff;
+      --soft-green: #eef8f3;
+      --soft-amber: #fff6e8;
+      --shadow: 0 18px 50px rgba(32, 44, 67, .14);
+      --font: "Pretendard Variable", Pretendard, SUIT, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background: #e9eef5;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(370px, 450px) minmax(0, 1fr);
+    }
+    .editor {
+      height: 100vh;
+      overflow: auto;
+      background: #fbfcfe;
+      border-right: 1px solid #d7dfeb;
+    }
+    .editor-head {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #151e2f;
+      color: #fff;
+      padding: 18px 18px 16px;
+    }
+    .editor-head h1 {
+      margin: 0 0 5px;
+      font-size: 19px;
+      line-height: 1.25;
+      font-weight: 850;
+    }
+    .editor-head p {
+      margin: 0;
+      color: #c4cedc;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .block {
+      padding: 17px 18px;
+      border-bottom: 1px solid #e3e9f1;
+    }
+    .block-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+    .block-title h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 850;
+      color: #233049;
+    }
+    .hint {
+      color: #748093;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field {
+      display: grid;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .field label {
+      color: #596579;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      padding: 10px 11px;
+      outline: none;
+    }
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.62;
+      word-break: keep-all;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(36, 87, 197, .13);
+    }
+    .score-list { display: grid; gap: 9px; }
+    .score-row {
+      display: grid;
+      grid-template-columns: 74px 1fr 32px;
+      gap: 9px;
+      align-items: center;
+    }
+    .score-label {
+      font-size: 12px;
+      font-weight: 850;
+      color: #364258;
+    }
+    .score-buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+    }
+    .score-btn {
+      min-width: 0;
+      height: 32px;
+      border: 1px solid #d2dae6;
+      border-radius: 8px;
+      background: #fff;
+      color: #667085;
+      font-weight: 850;
+    }
+    .score-btn.active {
+      background: #151e2f;
+      border-color: #151e2f;
+      color: #fff;
+    }
+    .score-now {
+      text-align: right;
+      font-weight: 900;
+      color: #1b2538;
+    }
+    .preset-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .tab-btn {
+      border: 1px solid #d1dae7;
+      border-radius: 999px;
+      background: #fff;
+      color: #4b5870;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .tab-btn.active {
+      background: #eaf1ff;
+      border-color: #97b5f1;
+      color: #173f91;
+    }
+    .preset-list {
+      display: grid;
+      gap: 7px;
+      max-height: 250px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .preset-btn {
+      text-align: left;
+      border: 1px solid #dde5ef;
+      border-radius: 9px;
+      background: #fff;
+      color: #2f3a50;
+      padding: 9px 10px;
+      line-height: 1.55;
+      font-size: 12px;
+      word-break: keep-all;
+    }
+    .preset-btn:hover {
+      border-color: #9eb7e8;
+      background: #f7faff;
+    }
+    .focus-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .focus-chip {
+      border: 1px solid #d4dce8;
+      border-radius: 999px;
+      background: #fff;
+      color: #4b5870;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .focus-chip.active {
+      background: #eaf7f1;
+      border-color: #8bc9aa;
+      color: #0f6d4a;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 15px 18px 22px;
+    }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-weight: 900;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-soft { background: #e6edf6; color: #263247; }
+    .preview {
+      height: 100vh;
+      overflow: auto;
+      padding: 24px;
+    }
+    .report {
+      max-width: 850px;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid #e0d9cc;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .report-top {
+      padding: 28px 30px 22px;
+      background:
+        linear-gradient(90deg, rgba(36,87,197,.08), rgba(22,132,92,.07)),
+        var(--paper);
+      border-bottom: 1px solid #e5ded2;
+    }
+    .report-kicker {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+    }
+    .report h2 {
+      margin: 0;
+      font-size: 29px;
+      line-height: 1.22;
+      font-weight: 900;
+      color: #101827;
+      word-break: keep-all;
+    }
+    .date-pill {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid #ded8cd;
+      color: #475467;
+      padding: 8px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .one-line {
+      margin-top: 16px;
+      max-width: 690px;
+      color: #334155;
+      font-size: 16px;
+      line-height: 1.68;
+      font-weight: 650;
+      word-break: keep-all;
+    }
+    .meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 16px;
+    }
+    .meta {
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid #e0d9cc;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: #536074;
+      font-weight: 800;
+    }
+    .report-body {
+      padding: 23px 30px 30px;
+    }
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+      margin-bottom: 22px;
+    }
+    .metric {
+      border: 1px solid #e2dbcf;
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,.58);
+    }
+    .metric-value {
+      font-size: 21px;
+      font-weight: 950;
+      color: #101827;
+      line-height: 1.15;
+    }
+    .metric-label {
+      margin-top: 5px;
+      color: #717b8c;
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1.04fr .96fr;
+      gap: 17px;
+    }
+    .report-section {
+      margin-bottom: 17px;
+    }
+    .report-section h3 {
+      margin: 0 0 9px;
+      color: #142035;
+      font-size: 15px;
+      font-weight: 950;
+    }
+    .note-box {
+      border-radius: 13px;
+      border: 1px solid #e1dbcf;
+      background: rgba(255,255,255,.7);
+      padding: 14px 15px;
+      color: #344054;
+      line-height: 1.75;
+      word-break: keep-all;
+      white-space: pre-line;
+    }
+    .note-box.blue { background: var(--soft-blue); border-color: #d3e2fb; }
+    .note-box.green { background: var(--soft-green); border-color: #cae9db; }
+    .note-box.amber { background: var(--soft-amber); border-color: #f0dec1; }
+    .bars { display: grid; gap: 9px; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 58px 1fr 28px;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #475467;
+      font-weight: 800;
+    }
+    .bar-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e5ded2;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+    }
+    .focus-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .report-tag {
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid #dbe3ee;
+      padding: 6px 9px;
+      font-size: 12px;
+      color: #334155;
+      font-weight: 850;
+    }
+    .practice-table {
+      display: grid;
+      gap: 8px;
+    }
+    .practice-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 10px;
+      border-radius: 11px;
+      border: 1px solid #e1dbcf;
+      background: rgba(255,255,255,.68);
+      padding: 10px 11px;
+      line-height: 1.62;
+    }
+    .practice-label {
+      font-size: 12px;
+      font-weight: 950;
+      color: #566277;
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #151e2f;
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: .18s;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (max-width: 980px) {
+      body { background: var(--paper); }
+      .shell { display: flex; flex-direction: column-reverse; }
+      .editor { height: auto; border-right: 0; border-top: 1px solid #d7dfeb; }
+      .editor-head { position: static; }
+      .preview { height: auto; overflow: visible; padding: 0; }
+      .report { border: 0; border-radius: 0; box-shadow: none; max-width: none; }
+      .report-top { padding: 23px 18px 18px; }
+      .report-body { padding: 20px 18px 24px; }
+      .title-row { display: grid; gap: 11px; }
+      .date-pill { width: fit-content; }
+      .report h2 { font-size: 25px; }
+      .one-line { font-size: 15px; }
+      .metric-strip { grid-template-columns: 1fr 1fr; }
+      .report-grid { grid-template-columns: 1fr; gap: 0; }
+      .grid-2 { grid-template-columns: 1fr; gap: 0; }
+      .score-row { grid-template-columns: 64px 1fr 26px; }
+    }
+    @media (max-width: 430px) {
+      .metric-strip { grid-template-columns: 1fr 1fr; gap: 7px; }
+      .metric { padding: 10px; }
+      .metric-value { font-size: 18px; }
+      .practice-row { grid-template-columns: 1fr; gap: 2px; }
+      .actions { grid-template-columns: 1fr; }
+      .preset-btn { font-size: 12px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .editor { display: none; }
+      .shell { display: block; }
+      .preview { height: auto; padding: 0; overflow: visible; }
+      .report { border: 0; border-radius: 0; box-shadow: none; max-width: none; }
+      .toast { display: none; }
+    }
+    body.share-mode {
+      background: var(--paper);
+    }
+    body.share-mode .shell {
+      display: block;
+    }
+    body.share-mode .editor {
+      display: none;
+    }
+    body.share-mode .preview {
+      height: auto;
+      min-height: 100vh;
+      overflow: visible;
+      padding: 0;
+    }
+    body.share-mode .report {
+      max-width: 760px;
+      min-height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+      border: 0;
+    }
+    body.share-mode .toast {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside class="editor">
+      <header class="editor-head">
+        <h1>분기/학기 성과보고서 작성</h1>
+        <p>이번 기간의 누적 평가와 프리셋 문장을 고르면 학부모용 모바일 보고서가 바로 정리됩니다. 문장은 필요할 때만 직접 다듬으세요.</p>
+      </header>
+
+      <section class="block">
+        <div class="block-title">
+          <h2>기본 정보</h2>
+          <span class="hint">기간 보고서 상단 정보</span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="studentName">학생 이름</label>
+            <input id="studentName" data-bind="studentName">
+          </div>
+          <div class="field">
+            <label for="periodName">평가 기간</label>
+            <select id="periodName" data-bind="periodName">
+              <option>이번 학기</option>
+              <option>이번 분기</option>
+              <option>1분기</option>
+              <option>2분기</option>
+              <option>3분기</option>
+              <option>4분기</option>
+              <option>상반기</option>
+              <option>하반기</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="teacherName">담당 선생님</label>
+            <input id="teacherName" data-bind="teacherName">
+          </div>
+          <div class="field">
+            <label for="ageGroup">연령대</label>
+            <select id="ageGroup" data-bind="ageGroup">
+              <option>4-6</option>
+              <option>6-8</option>
+              <option>8-10</option>
+              <option>10-12</option>
+              <option>12+</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="pieceTitle">현재 진도</label>
+          <input id="pieceTitle" data-bind="pieceTitle">
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="periodStart">시작일</label>
+            <input id="periodStart" type="date" data-bind="periodStart">
+          </div>
+          <div class="field">
+            <label for="periodEnd">종료일</label>
+            <input id="periodEnd" type="date" data-bind="periodEnd">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="totalLessons">기간 내 레슨 수</label>
+            <input id="totalLessons" type="number" min="0" data-bind="totalLessons">
+          </div>
+          <div class="field">
+            <label for="completedPieces">완료/정리한 곡</label>
+            <input id="completedPieces" type="number" min="0" data-bind="completedPieces">
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="block-title">
+          <h2>영역별 점수</h2>
+          <span class="hint">1 도움 필요 · 5 안정적</span>
+        </div>
+        <div id="scoreInputs" class="score-list"></div>
+      </section>
+
+      <section class="block">
+        <div class="block-title">
+          <h2>이번 기간 키워드</h2>
+          <span class="hint">보고서 태그</span>
+        </div>
+        <div id="focusChips" class="focus-wrap"></div>
+      </section>
+
+      <section class="block">
+        <div class="block-title">
+          <h2>문장 프리셋</h2>
+          <span class="hint">클릭하면 아래 문장에 추가</span>
+        </div>
+        <div id="presetTabs" class="preset-tabs"></div>
+        <div id="presetList" class="preset-list"></div>
+      </section>
+
+      <section class="block">
+        <div class="block-title">
+          <h2>보고서 문장</h2>
+          <span class="hint">필요한 만큼 수정</span>
+        </div>
+        <div class="field">
+          <label for="strengths">이번 기간 좋아진 점</label>
+          <textarea id="strengths" data-bind="strengths"></textarea>
+        </div>
+        <div class="field">
+          <label for="growthArea">다음에 잡아볼 점</label>
+          <textarea id="growthArea" data-bind="growthArea"></textarea>
+        </div>
+        <div class="field">
+          <label for="homeSupport">가정에서 도와주실 점</label>
+          <textarea id="homeSupport" data-bind="homeSupport"></textarea>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="block-title">
+          <h2>연습 처방</h2>
+          <span class="hint">다음 기간 과제</span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="dailyMinutes">권장 연습 시간</label>
+            <input id="dailyMinutes" type="number" min="0" data-bind="dailyMinutes">
+          </div>
+          <div class="field">
+            <label for="dailyReps">핵심 반복 횟수</label>
+            <input id="dailyReps" type="number" min="0" data-bind="dailyReps">
+          </div>
+        </div>
+        <div class="field">
+          <label for="practicePlan">구체적 연습 내용</label>
+          <textarea id="practicePlan" data-bind="practicePlan"></textarea>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="printReport">인쇄 / PDF</button>
+        <button class="btn btn-soft" id="resetDemo">샘플 복원</button>
+        <button class="btn btn-soft" id="shareMode">학부모 보기</button>
+      </div>
+    </aside>
+
+    <section class="preview">
+      <article class="report">
+        <header class="report-top">
+          <div class="report-kicker">스즈키 바이올린 성장 리포트</div>
+          <div class="title-row">
+            <h2><span data-view="studentName"></span>의 <span data-view="periodName"></span> 기록</h2>
+            <div class="date-pill" data-view="periodText"></div>
+          </div>
+          <div class="one-line" id="oneLine"></div>
+          <div class="meta-line">
+            <span class="meta">현재 진도 · <span data-view="pieceTitle"></span></span>
+            <span class="meta">담당 · <span data-view="teacherName"></span></span>
+            <span class="meta">레슨 · <span data-view="totalLessons"></span>회</span>
+            <span class="meta">정리한 곡 · <span data-view="completedPieces"></span>곡</span>
+            <span class="meta">권장 연습 · <span data-view="dailyMinutes"></span>분</span>
+          </div>
+        </header>
+
+        <div class="report-body">
+          <div class="metric-strip">
+            <div class="metric">
+              <div class="metric-value" data-view="avgScore"></div>
+              <div class="metric-label">기간 평균</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" data-view="topCategory"></div>
+              <div class="metric-label">가장 좋았던 부분</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" data-view="growthCategory"></div>
+              <div class="metric-label">다음에 볼 부분</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value"><span data-view="totalLessons"></span>회</div>
+              <div class="metric-label">기간 내 레슨</div>
+            </div>
+          </div>
+
+          <section class="report-section">
+            <h3>기간 요약</h3>
+            <div class="note-box blue" id="teacherSummary"></div>
+          </section>
+
+          <div class="report-grid">
+            <div>
+              <section class="report-section">
+                <h3>이번 기간 좋아진 점</h3>
+                <div class="note-box green" data-view="strengths"></div>
+              </section>
+
+              <section class="report-section">
+                <h3>다음에 잡아볼 점</h3>
+                <div class="note-box amber" data-view="growthArea"></div>
+              </section>
+            </div>
+
+            <div>
+              <section class="report-section">
+                <h3>영역별 기록</h3>
+                <div id="scoreBars" class="bars"></div>
+              </section>
+
+              <section class="report-section">
+                <h3>이번 기간 키워드</h3>
+                <div id="focusTags" class="focus-line"></div>
+              </section>
+            </div>
+          </div>
+
+          <section class="report-section">
+            <h3>다음 기간 연습 방향</h3>
+            <div class="practice-table">
+              <div class="practice-row">
+                <div class="practice-label">방법</div>
+                <div><span data-view="practicePlan"></span></div>
+              </div>
+              <div class="practice-row">
+                <div class="practice-label">기준</div>
+                <div><span data-view="dailyMinutes"></span>분 내외로, 핵심 구간을 <span data-view="dailyReps"></span>회 반복</div>
+              </div>
+              <div class="practice-row">
+                <div class="practice-label">부모님께</div>
+                <div data-view="homeSupport"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">저장됨</div>
+
+  <script>
+    const STORAGE_KEY = "suzuki.report.prototype.v2";
+
+    const categories = [
+      { id: "posture", label: "자세" },
+      { id: "intonation", label: "음정" },
+      { id: "rhythm", label: "리듬" },
+      { id: "tone", label: "톤" },
+      { id: "bow", label: "활" },
+      { id: "musicality", label: "음악성" }
+    ];
+
+    const focusOptions = [
+      "활 접촉점", "활 배분", "손목 이완", "왼손 모양", "4번 손가락",
+      "음정 안정", "개방현 울림", "리듬 유지", "느린 템포", "프레이징",
+      "톤 만들기", "암보", "무대 태도", "집중력", "복습 연결"
+    ];
+
+    const presetGroups = {
+      "잘된 점": {
+        target: "strengths",
+        items: [
+          "처음 시작할 때보다 활이 현 위에 안정적으로 올라왔고, 소리의 출발이 훨씬 차분해졌습니다.",
+          "멜로디의 방향을 잘 기억하고 있어서 프레이즈 끝을 자연스럽게 정리했습니다.",
+          "어려운 마디에서 멈추지 않고 다시 시도하는 태도가 좋았습니다.",
+          "리듬을 말로 먼저 확인한 뒤 연주하니 박자가 더 안정되었습니다.",
+          "왼손 손가락 모양이 학기 초보다 둥글게 유지되는 시간이 늘었습니다.",
+          "개방현 소리를 듣고 음정을 맞추려는 반응이 좋아졌습니다.",
+          "활을 길게 쓰는 구간에서 소리가 끊기지 않고 이어졌습니다.",
+          "빠르게 치기보다 좋은 소리를 먼저 찾으려는 모습이 좋았습니다.",
+          "곡의 분위기를 이해하고 조금씩 표현을 넣기 시작했습니다.",
+          "반복 연습한 부분은 손이 먼저 기억할 만큼 자연스러워졌습니다.",
+          "선생님이 짚어준 부분을 바로 고쳐보려는 집중력이 좋았습니다.",
+          "마지막까지 자세가 무너지지 않고 잘 버텼습니다.",
+          "암보 구간에서 흐름을 잃지 않고 끝까지 이어갔습니다.",
+          "소리가 작아지는 부분에서도 활 방향을 잘 유지했습니다.",
+          "어려운 부분을 스스로 천천히 나누어 연습하려는 모습이 보였습니다."
+        ]
+      },
+      "성장 포인트": {
+        target: "growthArea",
+        items: [
+          "현을 바꿀 때 팔꿈치 높이가 늦게 따라오면서 소리가 살짝 흔들립니다. 현을 바꾸기 전에 팔의 위치를 먼저 준비해 보겠습니다.",
+          "빠른 부분에서 왼손이 먼저 급해지며 음정이 올라가는 경향이 있습니다. 손가락을 누르기 전에 귀로 기준음을 떠올리는 연습이 필요합니다.",
+          "활 끝으로 갈수록 힘이 빠지면서 소리가 얇아집니다. 끝까지 팔 무게를 조금 남겨두는 연습을 하겠습니다.",
+          "점음표 리듬에서 짧은 음이 길어지는 습관이 있습니다. 말리듬으로 먼저 확인한 뒤 연주하면 좋아집니다.",
+          "프레이즈 중간에서 호흡이 끊기는 부분이 있습니다. 두 마디씩 연결해서 노래하듯 연습해 보겠습니다.",
+          "4번 손가락을 사용할 때 손목이 안쪽으로 접히는 모습이 보입니다. 손목을 세우고 손가락 끝으로 가볍게 누르는 연습이 필요합니다.",
+          "활이 브릿지와 평행하지 않을 때 톤이 거칠어집니다. 거울을 보며 활 길을 확인하면 좋겠습니다.",
+          "익숙한 구간은 잘 지나가지만 새 구간에서 템포가 빨라집니다. 새 구간만 따로 느리게 반복하겠습니다.",
+          "쉼표 직후 들어오는 타이밍이 조금 늦습니다. 쉬는 동안에도 속으로 박을 세는 연습이 필요합니다.",
+          "다이내믹 표현은 이해하고 있지만 실제 소리 차이는 아직 작습니다. 활 속도 차이를 더 분명히 만들어 보겠습니다.",
+          "손가락을 떼는 동작이 커서 다음 음으로 이동할 때 시간이 걸립니다. 손가락을 현 가까이에 두는 연습을 하겠습니다.",
+          "곡 전체를 연결하면 자세가 조금씩 낮아집니다. 짧은 구간마다 자세를 새로 확인하며 연습하겠습니다.",
+          "암보 중간에 틀렸을 때 다시 시작점으로 돌아가는 습관이 있습니다. 중간 시작 지점을 여러 개 만들어 보겠습니다.",
+          "소리를 크게 내려고 할 때 활 압력이 먼저 강해집니다. 압력보다 활 속도로 소리를 키우는 연습이 필요합니다.",
+          "반복할수록 집중이 흐려지는 구간이 있습니다. 짧게 목표를 정하고 성공한 반복만 세어 보겠습니다."
+        ]
+      },
+      "가정 도움": {
+        target: "homeSupport",
+        items: [
+          "연습을 시작하기 전 활이 브릿지와 평행한지 한 번만 같이 확인해 주세요.",
+          "틀린 부분을 바로 지적하기보다, 좋은 소리가 난 순간을 먼저 짚어주시면 도움이 됩니다.",
+          "빠르게 끝까지 치는 것보다 어려운 두 마디를 천천히 반복하는 날이 더 좋은 연습이 될 수 있습니다.",
+          "연습 시간은 길지 않아도 괜찮습니다. 이번 기간에 정리한 핵심 구간을 같은 순서로 해보면 좋겠습니다.",
+          "아이에게 먼저 어떤 부분을 연습할지 말로 설명하게 해주세요. 스스로 목표를 말하면 집중이 좋아집니다.",
+          "음정이 흔들릴 때는 바로 고치기보다 개방현 소리를 한 번 듣고 다시 시작하게 해주세요.",
+          "자세를 오래 지적하면 부담이 될 수 있으니, 시작 전과 끝난 뒤 두 번만 확인해 주세요.",
+          "성공한 반복을 표시할 수 있게 작은 체크표를 만들어 주시면 동기부여가 됩니다.",
+          "힘들어하는 날에는 전체 곡보다 가장 자신 있는 구간을 예쁘게 한 번 연주하고 마무리해도 좋습니다.",
+          "연습 후에는 이번에 가장 좋아진 부분을 아이가 직접 고르게 해주세요.",
+          "메트로놈은 처음부터 쓰기보다 리듬을 말로 익힌 뒤 천천히 맞춰보면 좋습니다.",
+          "연습 중간에 소리가 거칠어지면 잠깐 활을 내려놓고 오른손을 흔들어 힘을 빼주세요."
+        ]
+      },
+      "연습 처방": {
+        target: "practicePlan",
+        items: [
+          "첫 4마디를 아주 느린 속도로 두 번 연습한 뒤, 원래 속도에 가깝게 한 번 연결합니다.",
+          "현이 바뀌는 마디만 따로 떼어 활 각도를 확인하며 반복합니다.",
+          "어려운 리듬은 악기 없이 말로 세 번 말한 뒤 바로 연주합니다.",
+          "개방현을 먼저 울린 뒤 같은 손가락 음을 연주하며 음정을 맞춥니다.",
+          "마지막 두 마디부터 거꾸로 시작해서 앞부분으로 붙여 갑니다.",
+          "프레이즈 끝 음을 길게 듣고, 활을 급하게 멈추지 않도록 연습합니다.",
+          "4번 손가락이 나오는 부분은 손목 모양을 확인한 뒤 짧게 반복합니다.",
+          "메트로놈을 느린 템포에 두고 박자가 흔들리지 않는 반복만 세어 봅니다.",
+          "곡 전체는 한 번만 연결하고, 대부분의 시간은 핵심 구간에 씁니다.",
+          "연습 마지막에는 가장 좋아진 소리로 한 번만 녹음해 들어봅니다."
+        ]
+      },
+      "칭찬 문장": {
+        target: "strengths",
+        items: [
+          "이번 기간에는 스스로 고쳐보려는 태도가 특히 좋아졌습니다.",
+          "어려운 부분을 피하지 않고 반복해 본 점을 칭찬하고 싶습니다.",
+          "소리를 듣고 바꾸려는 귀가 조금씩 열리고 있습니다.",
+          "지난 시간에 비해 곡의 흐름을 훨씬 잘 기억했습니다.",
+          "작은 변화에도 집중해서 따라오는 모습이 인상적이었습니다.",
+          "연습한 흔적이 분명히 들렸습니다.",
+          "긴장해도 끝까지 해내는 힘이 좋아지고 있습니다.",
+          "좋은 자세를 스스로 찾는 시간이 빨라졌습니다."
+        ]
+      }
+    };
+
+    const sampleState = {
+      studentName: "김지우",
+      periodName: "이번 학기",
+      periodStart: "2026-03-01",
+      periodEnd: "2026-05-20",
+      totalLessons: 10,
+      completedPieces: 2,
+      teacherName: "이선생",
+      ageGroup: "8-10",
+      pieceTitle: "Book 1 · Minuet 1",
+      scores: { posture: 4, intonation: 3, rhythm: 4, tone: 4, bow: 3, musicality: 4 },
+      focus: ["활 접촉점", "음정 안정", "프레이징"],
+      strengths: "멜로디의 방향을 잘 기억하고 있어서 프레이즈 끝을 자연스럽게 정리하는 힘이 좋아졌습니다.\n어려운 마디에서 멈추지 않고 다시 시도하는 태도가 꾸준히 보였습니다.",
+      growthArea: "현을 바꿀 때 팔꿈치 높이가 늦게 따라오면서 소리가 살짝 흔들립니다. 현을 바꾸기 전에 팔의 위치를 먼저 준비해 보겠습니다.",
+      homeSupport: "연습을 시작하기 전 활이 브릿지와 평행한지 한 번만 같이 확인해 주세요. 빠르게 끝까지 치는 것보다 어려운 두 마디를 천천히 반복하는 날이 더 좋은 연습이 될 수 있습니다.",
+      dailyMinutes: 20,
+      dailyReps: 5,
+      practicePlan: "첫 4마디를 아주 느린 속도로 두 번 연습한 뒤, 원래 속도에 가깝게 한 번 연결합니다."
+    };
+
+    let state = loadState();
+    let activePreset = "잘된 점";
+    let toastTimer = null;
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return { ...clone(sampleState), ...JSON.parse(saved) };
+      } catch (error) {}
+      return clone(sampleState);
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const toast = document.getElementById("toast");
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 850);
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      return new Date(value + "T00:00:00").toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    }
+
+    function averageScore() {
+      return categories.reduce((sum, cat) => sum + Number(state.scores[cat.id] || 0), 0) / categories.length;
+    }
+
+    function topCategory() {
+      return categories.reduce((best, cat) => state.scores[cat.id] > state.scores[best.id] ? cat : best, categories[0]);
+    }
+
+    function growthCategory() {
+      return categories.reduce((weakest, cat) => state.scores[cat.id] < state.scores[weakest.id] ? cat : weakest, categories[0]);
+    }
+
+    function appendPreset(groupName, text) {
+      const target = presetGroups[groupName].target;
+      const current = String(state[target] || "").trim();
+      state[target] = current ? `${current}\n${text}` : text;
+      render();
+      saveState();
+      const field = document.querySelector(`[data-bind="${target}"]`);
+      if (field) field.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+
+    function renderInputs() {
+      document.querySelectorAll("[data-bind]").forEach(input => {
+        const key = input.dataset.bind;
+        if (document.activeElement !== input) input.value = state[key] ?? "";
+      });
+
+      document.getElementById("scoreInputs").innerHTML = categories.map(cat => {
+        const buttons = [1, 2, 3, 4, 5].map(score => {
+          const active = state.scores[cat.id] === score ? " active" : "";
+          return `<button class="score-btn${active}" data-score="${cat.id}:${score}" type="button">${score}</button>`;
+        }).join("");
+        return `<div class="score-row"><div class="score-label">${cat.label}</div><div class="score-buttons">${buttons}</div><div class="score-now">${state.scores[cat.id]}</div></div>`;
+      }).join("");
+
+      document.getElementById("focusChips").innerHTML = focusOptions.map(option => {
+        const active = state.focus.includes(option) ? " active" : "";
+        return `<button class="focus-chip${active}" data-focus="${option}" type="button">${option}</button>`;
+      }).join("");
+
+      document.getElementById("presetTabs").innerHTML = Object.keys(presetGroups).map(name => {
+        const active = activePreset === name ? " active" : "";
+        return `<button class="tab-btn${active}" data-preset-tab="${name}" type="button">${name}</button>`;
+      }).join("");
+
+      document.getElementById("presetList").innerHTML = presetGroups[activePreset].items.map(item => {
+        return `<button class="preset-btn" data-preset-text="${escapeAttr(item)}" type="button">${item}</button>`;
+      }).join("");
+    }
+
+    function renderReport() {
+      const average = averageScore();
+      const top = topCategory();
+      const growth = growthCategory();
+      const values = {
+        ...state,
+        periodText: `${formatDate(state.periodStart)} - ${formatDate(state.periodEnd)}`,
+        avgScore: average.toFixed(1),
+        topCategory: top.label,
+        growthCategory: growth.label
+      };
+
+      document.querySelectorAll("[data-view]").forEach(node => {
+        node.textContent = values[node.dataset.view] ?? "";
+      });
+
+      document.getElementById("oneLine").textContent =
+        `${state.studentName}은 ${state.periodName} 동안 ${state.pieceTitle}에서 ${top.label}이 특히 좋아졌습니다. 다음 기간에는 ${growth.label}을 중심으로 짧고 정확하게 반복해 보겠습니다.`;
+
+      document.getElementById("teacherSummary").textContent =
+        `${state.periodName} 동안 ${top.label}이 가장 안정적으로 자리 잡았습니다. ${growth.label}은 아직 손에 익는 중이라, 다음 기간에는 속도를 올리기보다 좋은 소리와 바른 움직임을 먼저 확인하겠습니다.`;
+
+      document.getElementById("scoreBars").innerHTML = categories.map(cat => {
+        const score = Number(state.scores[cat.id]) || 0;
+        return `<div class="bar-row"><div>${cat.label}</div><div class="bar-track"><div class="bar-fill" style="width:${score / 5 * 100}%"></div></div><div>${score}</div></div>`;
+      }).join("");
+
+      document.getElementById("focusTags").innerHTML = state.focus.length
+        ? state.focus.map(tag => `<span class="report-tag">${tag}</span>`).join("")
+        : `<span class="hint">키워드를 선택해 주세요.</span>`;
+    }
+
+    function render() {
+      renderInputs();
+      renderReport();
+    }
+
+    function escapeAttr(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    document.addEventListener("input", event => {
+      const key = event.target.dataset.bind;
+      if (!key) return;
+      state[key] = event.target.type === "number" ? Number(event.target.value) : event.target.value;
+      render();
+      saveState();
+    });
+
+    document.addEventListener("click", event => {
+      const scoreButton = event.target.closest("[data-score]");
+      if (scoreButton) {
+        const [id, value] = scoreButton.dataset.score.split(":");
+        state.scores[id] = Number(value);
+        render();
+        saveState();
+        return;
+      }
+
+      const focusButton = event.target.closest("[data-focus]");
+      if (focusButton) {
+        const value = focusButton.dataset.focus;
+        state.focus = state.focus.includes(value)
+          ? state.focus.filter(item => item !== value)
+          : [...state.focus, value];
+        render();
+        saveState();
+        return;
+      }
+
+      const tabButton = event.target.closest("[data-preset-tab]");
+      if (tabButton) {
+        activePreset = tabButton.dataset.presetTab;
+        renderInputs();
+        return;
+      }
+
+      const presetButton = event.target.closest("[data-preset-text]");
+      if (presetButton) {
+        appendPreset(activePreset, presetButton.dataset.presetText);
+      }
+    });
+
+    document.getElementById("printReport").addEventListener("click", () => window.print());
+
+    document.getElementById("shareMode").addEventListener("click", () => {
+      document.body.classList.add("share-mode");
+      history.replaceState(null, "", "#parent-view");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    document.getElementById("resetDemo").addEventListener("click", () => {
+      state = clone(sampleState);
+      activePreset = "잘된 점";
+      render();
+      saveState();
+    });
+
+    if (location.hash === "#parent-view") document.body.classList.add("share-mode");
+    render();
+  </script>
+</body>
+</html>
