@@ -58,6 +58,10 @@ export const studentInputSchema = z.object({
   registrationSequence: z.number().int().min(1).max(9999),
 });
 
+export const studentCreateSchema = studentInputSchema.omit({ registrationSequence: true }).extend({
+  registrationSequence: z.number().int().min(1).max(9999).optional(),
+});
+
 export const parentAccessSchema = z.object({
   token: z.string().trim().min(8).max(200),
   birthYYMMDD: z.string().regex(/^\d{6}$/, "생년월일 6자리를 입력하세요."),
@@ -67,6 +71,7 @@ export const parentAccessSchema = z.object({
 
 export type ReportDraftInput = z.infer<typeof reportDraftSchema>;
 export type ParentAccessSchemaInput = z.infer<typeof parentAccessSchema>;
+export type StudentCreateInput = z.infer<typeof studentCreateSchema>;
 
 export const academicPeriodSchema = z
   .object({
@@ -93,3 +98,15 @@ export function buildStudentCode(input: {
     .slice(0, 12);
   return `${input.registrationYear}-${normalizedSchool || "STUDIO"}-${String(input.registrationSequence).padStart(3, "0")}`;
 }
+
+export const teacherAuthSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(6).max(128),
+  name: z.string().trim().max(80).optional(),
+  studioName: z.string().trim().max(120).optional(),
+});
+
+export const reportStoreSchema = reportPublishSchema.safeExtend({
+  studentId: z.string().uuid(),
+  academicPeriodId: z.string().uuid().optional(),
+});

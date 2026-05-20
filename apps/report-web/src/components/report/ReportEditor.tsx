@@ -2,17 +2,53 @@
 
 import { useMemo, useState } from "react";
 import { focusOptions, presetGroups, sampleReport, scoreCategories } from "@/lib/report/content";
-import type { ReportData, ScoreCategoryId } from "@/lib/report/types";
+import type {
+  ReportData,
+  ScoreCategoryId,
+  TeacherPeriodOption,
+  TeacherStudentOption,
+} from "@/lib/report/types";
 import { PrintButton } from "../PrintButton";
 import { ReportDocument } from "./ReportDocument";
 
 type PresetTarget = "strengths" | "growthArea" | "homeSupport" | "practicePlan";
 type PresetGroupName = keyof typeof presetGroups;
+type PublishResult = {
+  reportId: string;
+  portalUrl: string;
+  portalPin: string;
+};
 
-export function ReportEditor() {
-  const [report, setReport] = useState<ReportData>(sampleReport);
+export function ReportEditor({
+  students = [],
+  periods = [],
+  canSaveToDatabase = false,
+  teacherName,
+}: {
+  students?: TeacherStudentOption[];
+  periods?: TeacherPeriodOption[];
+  canSaveToDatabase?: boolean;
+  teacherName?: string;
+}) {
+  const initialStudent = students[0];
+  const initialPeriod = periods[0];
+  const [report, setReport] = useState<ReportData>(() => ({
+    ...sampleReport,
+    studentName: initialStudent?.name ?? sampleReport.studentName,
+    ageGroup: initialStudent?.ageGroup ?? sampleReport.ageGroup,
+    currentPiece: initialStudent?.currentPiece ?? sampleReport.currentPiece,
+    periodName: initialPeriod?.name ?? sampleReport.periodName,
+    periodStart: initialPeriod?.startsOn ?? sampleReport.periodStart,
+    periodEnd: initialPeriod?.endsOn ?? sampleReport.periodEnd,
+    teacherName: teacherName || sampleReport.teacherName,
+  }));
+  const [selectedStudentId, setSelectedStudentId] = useState(initialStudent?.id ?? "");
+  const [selectedPeriodId, setSelectedPeriodId] = useState(initialPeriod?.id ?? "");
   const [activePreset, setActivePreset] = useState<PresetGroupName>("좋아진 점");
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const parentDemoUrl = useMemo(() => "/r/demo-token", []);
 
   function update<K extends keyof ReportData>(key: K, value: ReportData[K]) {
@@ -23,6 +59,30 @@ export function ReportEditor() {
     setReport((current) => ({
       ...current,
       scores: { ...current.scores, [category]: value },
+    }));
+  }
+
+  function selectStudent(studentId: string) {
+    setSelectedStudentId(studentId);
+    const student = students.find((item) => item.id === studentId);
+    if (!student) return;
+    setReport((current) => ({
+      ...current,
+      studentName: student.name,
+      ageGroup: student.ageGroup,
+      currentPiece: student.currentPiece || current.currentPiece,
+    }));
+  }
+
+  function selectPeriod(periodId: string) {
+    setSelectedPeriodId(periodId);
+    const period = periods.find((item) => item.id === periodId);
+    if (!period) return;
+    setReport((current) => ({
+      ...current,
+      periodName: period.name,
+      periodStart: period.startsOn,
+      periodEnd: period.endsOn,
     }));
   }
 
@@ -52,6 +112,38 @@ export function ReportEditor() {
     setSavedAt(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }));
   }
 
+  async function publishToDatabase() {
+    if (!selectedStudentId) {
+      setPublishError("학생을 먼저 선택해 주세요.");
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishResult(null);
+
+    try {
+      const response = await fetch("/teacher/reports", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...report,
+          studentId: selectedStudentId,
+          academicPeriodId: selectedPeriodId || undefined,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "보고서 저장에 실패했습니다.");
+      }
+      setPublishResult(payload);
+    } catch (error) {
+      setPublishError(error instanceof Error ? error.message : "보고서 저장에 실패했습니다.");
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
   return (
     <div className="grid min-h-screen bg-slate-100 lg:grid-cols-[430px_1fr]">
       <aside className="no-print border-r border-slate-200 bg-white">
@@ -59,26 +151,52 @@ export function ReportEditor() {
           <p className="text-xs font-black text-blue-200">선생님 작성 화면</p>
           <h1 className="mt-1 text-xl font-black">분기/학기 성과보고서</h1>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            지금은 Supabase 연결 전 데모 작성 화면입니다. 다음 단계에서 이 폼을 서버 draft
-            저장과 공유 링크 생성에 연결합니다.
+            {canSaveToDatabase
+              ? "학생과 기간을 선택해 작성하면 Supabase DB에 발행본이 저장되고 학부모 포털 링크가 생성됩니다."
+              : "DB 환경변수 또는 선생님 로그인이 없으면 데모 작성과 PDF 미리보기만 사용할 수 있습니다."}
           </p>
         </div>
 
         <div className="space-y-6 p-5">
           <Panel title="기본 정보">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              {students.length > 0 ? (
+                <Field label="학생 선택">
+                  <select value={selectedStudentId} onChange={(event) => selectStudent(event.target.value)}>
+                    {students.map((student) => (
+                      <option key={student.id} value={student.id}>
+                        {student.name} · {student.studentCode}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
               <Field label="학생 이름">
                 <input value={report.studentName} onChange={(event) => update("studentName", event.target.value)} />
               </Field>
               <Field label="평가 기간">
-                <select value={report.periodName} onChange={(event) => update("periodName", event.target.value)}>
-                  {["이번 학기", "이번 분기", "1분기", "2분기", "3분기", "4분기", "상반기", "하반기"].map(
-                    (period) => (
-                      <option key={period}>{period}</option>
-                    ),
-                  )}
+                <select
+                  value={periods.length > 0 ? selectedPeriodId : report.periodName}
+                  onChange={(event) =>
+                    periods.length > 0 ? selectPeriod(event.target.value) : update("periodName", event.target.value)
+                  }
+                >
+                  {periods.length > 0
+                    ? periods.map((period) => (
+                        <option key={period.id} value={period.id}>
+                          {period.name}
+                        </option>
+                      ))
+                    : ["이번 학기", "이번 분기", "1분기", "2분기", "3분기", "4분기", "상반기", "하반기"].map(
+                        (period) => <option key={period}>{period}</option>,
+                      )}
                 </select>
               </Field>
+              {periods.length > 0 ? (
+                <Field label="보고서 제목용 기간명">
+                  <input value={report.periodName} onChange={(event) => update("periodName", event.target.value)} />
+                </Field>
+              ) : null}
               <Field label="시작일">
                 <input
                   type="date"
@@ -208,6 +326,16 @@ export function ReportEditor() {
           </Panel>
 
           <div className="grid gap-2">
+            {canSaveToDatabase ? (
+              <button
+                type="button"
+                onClick={publishToDatabase}
+                disabled={isPublishing || !selectedStudentId}
+                className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {isPublishing ? "DB 저장 중" : "DB 저장 후 포털 링크 생성"}
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={saveDemoDraft}
@@ -222,6 +350,20 @@ export function ReportEditor() {
               학부모 인증 데모 열기
             </a>
             <PrintButton label="미리보기 PDF 저장" />
+            {publishResult ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
+                <p className="font-black">학부모 포털 링크가 생성되었습니다.</p>
+                <a href={publishResult.portalUrl} className="mt-1 block break-all font-bold underline">
+                  {publishResult.portalUrl}
+                </a>
+                <p className="mt-1 font-bold">PIN: {publishResult.portalPin}</p>
+              </div>
+            ) : null}
+            {publishError ? (
+              <p className="rounded-2xl bg-red-50 px-3 py-2 text-sm font-bold text-red-700">
+                {publishError}
+              </p>
+            ) : null}
             {savedAt ? <p className="text-center text-xs font-bold text-slate-500">{savedAt} 로컬 데모 저장됨</p> : null}
           </div>
         </div>
@@ -274,4 +416,3 @@ function TextField({
     </label>
   );
 }
-

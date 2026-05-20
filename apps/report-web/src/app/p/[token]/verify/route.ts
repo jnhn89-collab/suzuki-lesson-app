@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isDemoPortalAccess } from "@/lib/demo";
+import { getPortalSessionCookieName, verifyParentPortalAccess } from "@/lib/portal/service";
 import { parentAccessSchema } from "@/lib/report/schema";
 
 export async function POST(
@@ -19,16 +20,29 @@ export async function POST(
     return redirectToError(request, token);
   }
 
-  if (!isDemoPortalAccess(parsed.data)) {
+  const response = NextResponse.redirect(new URL(`/p/${token}/reports`, request.url), 303);
+  if (isDemoPortalAccess(parsed.data)) {
+    response.cookies.set("parent_portal_demo", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60,
+      path: `/p/${token}`,
+    });
+
+    return response;
+  }
+
+  const verified = await verifyParentPortalAccess(parsed.data);
+  if (!verified.ok) {
     return redirectToError(request, token);
   }
 
-  const response = NextResponse.redirect(new URL(`/p/${token}/reports`, request.url), 303);
-  response.cookies.set("parent_portal_demo", token, {
+  response.cookies.set(getPortalSessionCookieName(), verified.sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60,
+    maxAge: verified.maxAge,
     path: `/p/${token}`,
   });
 

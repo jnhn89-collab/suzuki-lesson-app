@@ -14,6 +14,13 @@ export function hmacIdentifier(value: string, pepper: string) {
   return createHmac("sha256", pepper).update(value).digest("base64url");
 }
 
+export function safeEqualString(left: string, right: string) {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return timingSafeEqual(leftBuffer, rightBuffer);
+}
+
 export function hashPassword(secret: string) {
   const salt = randomBytes(16).toString("base64url");
   const key = scryptSync(secret, salt, SCRYPT_KEY_LENGTH).toString("base64url");
@@ -28,4 +35,3 @@ export function verifyPassword(secret: string, stored: string) {
   if (expected.length !== actual.length) return false;
   return timingSafeEqual(expected, actual);
 }
-

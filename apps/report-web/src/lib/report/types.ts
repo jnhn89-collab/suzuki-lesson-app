@@ -67,3 +67,13 @@ export type ParentAccessInput = {
   phoneLast4: string;
   pin: string;
 };
+
+export type TeacherStudentOption = Pick<
+  StudentSummary,
+  "id" | "studentCode" | "name" | "ageGroup" | "currentPiece"
+>;
+
+export type TeacherPeriodOption = Pick<
+  AcademicPeriod,
+  "id" | "name" | "startsOn" | "endsOn" | "schoolYear" | "periodType"
+>;
