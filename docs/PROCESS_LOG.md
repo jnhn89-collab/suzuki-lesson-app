@@ -71,5 +71,16 @@ Architecture:
 - After removing `/r`, `.next` cache was cleared and `npm run lint`, `npm run typecheck`, `npm run build` passed again. Build route list now includes only `/p` parent routes.
 - Existing-link regression was corrected: when a report is added for a student with an active report함 link, the app issues a fresh opaque URL that keeps the existing PIN; reset revokes other active links and creates a new PIN.
 - `supabase` CLI is not installed locally, so migration `0004_parent_portal_security.sql` still needs Supabase project application/verification.
+
+### Dev 2 Changes
+
+- Added quick period registration templates for the current Korean school-year flow: 1학기, 2학기, 1-4분기.
+- Split period registration into "빠른 기간 등록" and "직접 기간 등록" so teachers do not have to type common dates repeatedly.
+
+### Dev 3 Changes
+
+- Added `npm run quality`.
+- The quality gate verifies research data counts, source/use-case data, core docs, removal of `/r`, opaque token structure, and presence of migration `0004`.
+- Dev 2/3 validation: `npm run quality`, `npm run lint -- --no-cache`, `npm run typecheck -- --incremental false`, and `npm run build` passed.
 - Read Claude's blocker list once it finishes.
 - Push `dev` after checks pass, then verify Vercel Preview from the external URL.

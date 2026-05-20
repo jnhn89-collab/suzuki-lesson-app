@@ -5,6 +5,7 @@ import { createAcademicPeriodAction } from "@/lib/teacher/actions";
 import { getTeacherPeriodsPageData } from "@/lib/teacher/data";
 
 const currentYear = new Date().getFullYear();
+const periodTemplates = buildPeriodTemplates(currentYear);
 
 export const dynamic = "force-dynamic";
 
@@ -38,45 +39,59 @@ export default async function TeacherPeriodsPage({
         ) : null}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[360px_1fr]">
-          <form action={createAcademicPeriodAction} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-slate-950">새 기간 등록</h2>
-            <div className="mt-4 grid gap-3">
-              <Field label="기간명" name="name" placeholder="예: 2026 봄학기" disabled={!canWrite} />
-              <label className="grid gap-1 text-xs font-extrabold text-slate-500">
-                기간 유형
-                <select
-                  name="periodType"
-                  disabled={!canWrite}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 disabled:bg-slate-100 disabled:text-slate-400"
-                  defaultValue="semester"
-                >
-                  <option value="semester">학기</option>
-                  <option value="quarter">분기</option>
-                  <option value="custom">직접 설정</option>
-                </select>
-              </label>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="시작일" name="startsOn" type="date" disabled={!canWrite} />
-                <Field label="종료일" name="endsOn" type="date" disabled={!canWrite} />
+          <div className="space-y-4">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-lg font-black text-slate-950">빠른 기간 등록</h2>
+              <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+                한국 학기 흐름에 맞춘 기본 기간입니다. 필요한 기간만 눌러 등록하세요.
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {periodTemplates.map((template) => (
+                  <TemplateSubmit key={template.name} template={template} disabled={!canWrite} />
+                ))}
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field
-                  label="학년도"
-                  name="schoolYear"
-                  type="number"
-                  defaultValue={String(currentYear)}
-                  disabled={!canWrite}
-                />
-                <Field label="정렬 순서" name="sortOrder" type="number" defaultValue="0" disabled={!canWrite} />
+            </section>
+
+            <form action={createAcademicPeriodAction} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-lg font-black text-slate-950">직접 기간 등록</h2>
+              <div className="mt-4 grid gap-3">
+                <Field label="기간명" name="name" placeholder="예: 2026 봄학기" disabled={!canWrite} />
+                <label className="grid gap-1 text-xs font-extrabold text-slate-500">
+                  기간 유형
+                  <select
+                    name="periodType"
+                    disabled={!canWrite}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 disabled:bg-slate-100 disabled:text-slate-400"
+                    defaultValue="semester"
+                  >
+                    <option value="semester">학기</option>
+                    <option value="quarter">분기</option>
+                    <option value="custom">직접 설정</option>
+                  </select>
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="시작일" name="startsOn" type="date" disabled={!canWrite} />
+                  <Field label="종료일" name="endsOn" type="date" disabled={!canWrite} />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="학년도"
+                    name="schoolYear"
+                    type="number"
+                    defaultValue={String(currentYear)}
+                    disabled={!canWrite}
+                  />
+                  <Field label="정렬 순서" name="sortOrder" type="number" defaultValue="0" disabled={!canWrite} />
+                </div>
               </div>
-            </div>
-            <button
-              disabled={!canWrite}
-              className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              DB에 기간 등록
-            </button>
-          </form>
+              <button
+                disabled={!canWrite}
+                className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                기간 등록
+              </button>
+            </form>
+          </div>
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
@@ -96,6 +111,94 @@ export default async function TeacherPeriodsPage({
         </div>
       </section>
     </main>
+  );
+}
+
+type PeriodTemplate = {
+  name: string;
+  periodType: "semester" | "quarter";
+  startsOn: string;
+  endsOn: string;
+  schoolYear: number;
+  sortOrder: number;
+};
+
+function buildPeriodTemplates(year: number): PeriodTemplate[] {
+  const nextYear = year + 1;
+  return [
+    {
+      name: `${year} 1학기`,
+      periodType: "semester",
+      startsOn: `${year}-03-01`,
+      endsOn: `${year}-08-31`,
+      schoolYear: year,
+      sortOrder: 10,
+    },
+    {
+      name: `${year} 2학기`,
+      periodType: "semester",
+      startsOn: `${year}-09-01`,
+      endsOn: `${nextYear}-02-28`,
+      schoolYear: year,
+      sortOrder: 20,
+    },
+    {
+      name: `${year} 1분기`,
+      periodType: "quarter",
+      startsOn: `${year}-03-01`,
+      endsOn: `${year}-05-31`,
+      schoolYear: year,
+      sortOrder: 1,
+    },
+    {
+      name: `${year} 2분기`,
+      periodType: "quarter",
+      startsOn: `${year}-06-01`,
+      endsOn: `${year}-08-31`,
+      schoolYear: year,
+      sortOrder: 2,
+    },
+    {
+      name: `${year} 3분기`,
+      periodType: "quarter",
+      startsOn: `${year}-09-01`,
+      endsOn: `${year}-11-30`,
+      schoolYear: year,
+      sortOrder: 3,
+    },
+    {
+      name: `${year} 4분기`,
+      periodType: "quarter",
+      startsOn: `${year}-12-01`,
+      endsOn: `${nextYear}-02-28`,
+      schoolYear: year,
+      sortOrder: 4,
+    },
+  ];
+}
+
+function TemplateSubmit({
+  template,
+  disabled,
+}: {
+  template: PeriodTemplate;
+  disabled: boolean;
+}) {
+  return (
+    <form action={createAcademicPeriodAction}>
+      <input type="hidden" name="name" value={template.name} />
+      <input type="hidden" name="periodType" value={template.periodType} />
+      <input type="hidden" name="startsOn" value={template.startsOn} />
+      <input type="hidden" name="endsOn" value={template.endsOn} />
+      <input type="hidden" name="schoolYear" value={template.schoolYear} />
+      <input type="hidden" name="sortOrder" value={template.sortOrder} />
+      <button
+        disabled={disabled}
+        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+      >
+        {template.name}
+      </button>
+    </form>
   );
 }
 
