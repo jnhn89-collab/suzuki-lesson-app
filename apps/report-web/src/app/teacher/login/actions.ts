@@ -51,6 +51,7 @@ export async function signUpTeacherAction(formData: FormData) {
     redirect("/teacher/login?error=input");
   }
 
+  const supabase = await createSupabaseServerClient();
   const admin = createSupabaseAdminClient();
   const { error: createError } = await admin.auth.admin.createUser({
     email: parsed.data.email,
@@ -63,10 +64,14 @@ export async function signUpTeacherAction(formData: FormData) {
   });
 
   if (createError) {
-    redirect(`/teacher/login?error=${encodeURIComponent(toAuthErrorCode(createError.message, "signup"))}`);
+    const code = toAuthErrorCode(createError.message, "signup");
+    if (code === "email-already-exists") {
+      const signedIn = await signInAndEnsureProfile(supabase, parsed.data.email, parsed.data.password);
+      if (signedIn) redirect("/teacher");
+    }
+    redirect(`/teacher/login?error=${encodeURIComponent(code)}`);
   }
 
-  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -87,6 +92,17 @@ export async function signOutTeacherAction() {
   }
 
   redirect("/teacher/login");
+}
+
+async function signInAndEnsureProfile(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  email: string,
+  password: string,
+) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !data.user) return false;
+  await ensureTeacherProfile(supabase, data.user);
+  return true;
 }
 
 function toAuthErrorCode(message: string | undefined, fallback: string) {
