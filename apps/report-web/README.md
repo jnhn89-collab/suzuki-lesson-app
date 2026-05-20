@@ -7,8 +7,10 @@
 - 선생님 보고서 작성 데모: `/teacher/reports/new`
 - 학부모 인증 데모: `/r/demo-token`
 - 인증 후 학부모 모바일 보고서: `/r/demo-token/view`
+- 학생 포털 인증 데모: `/p/demo-portal`
+- 학생 포털 보고서 목록: `/p/demo-portal/reports`
 - PDF 저장: 브라우저 인쇄 기반
-- Supabase migration 초안: `supabase/migrations/0001_initial_report_app.sql`
+- Supabase migration 초안: `supabase/migrations/`
 
 ## 로컬 실행
 
@@ -38,3 +40,10 @@ PARENT_ACCESS_PEPPER
 ```
 
 민감한 값은 Git에 커밋하지 않습니다.
+
+## 공유 모델
+
+- `/r/:token`: 단일 보고서 공유 링크
+- `/p/:token`: 학생별 학부모 포털 링크
+- 학부모 포털에서는 발행된 여러 학기/분기 보고서를 목록으로 확인합니다.
+- 학생 식별자는 학교명, 등록연도, 등록순번을 조합한 `student_code`를 사용합니다.

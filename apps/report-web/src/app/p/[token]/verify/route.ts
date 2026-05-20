@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isDemoReportAccess } from "@/lib/demo";
+import { isDemoPortalAccess } from "@/lib/demo";
 import { parentAccessSchema } from "@/lib/report/schema";
 
 export async function POST(
@@ -19,22 +19,22 @@ export async function POST(
     return redirectToError(request, token);
   }
 
-  if (!isDemoReportAccess(parsed.data)) {
+  if (!isDemoPortalAccess(parsed.data)) {
     return redirectToError(request, token);
   }
 
-  const response = NextResponse.redirect(new URL(`/r/${token}/view`, request.url), 303);
-  response.cookies.set("parent_report_demo", token, {
+  const response = NextResponse.redirect(new URL(`/p/${token}/reports`, request.url), 303);
+  response.cookies.set("parent_portal_demo", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60,
-    path: `/r/${token}`,
+    path: `/p/${token}`,
   });
 
   return response;
 }
 
 function redirectToError(request: NextRequest, token: string) {
-  return NextResponse.redirect(new URL(`/r/${token}?error=1`, request.url), 303);
+  return NextResponse.redirect(new URL(`/p/${token}?error=1`, request.url), 303);
 }

@@ -32,10 +32,38 @@ export type ReportData = {
   status?: ReportStatus;
 };
 
+export type StudentSummary = {
+  id: string;
+  studentCode: string;
+  name: string;
+  schoolName: string;
+  enrollmentYear: number;
+  registrationYear: number;
+  registrationSequence: number;
+  ageGroup: string;
+  currentPiece: string;
+  status: "active" | "inactive";
+};
+
+export type AcademicPeriod = {
+  id: string;
+  name: string;
+  periodType: "semester" | "quarter" | "custom";
+  startsOn: string;
+  endsOn: string;
+  schoolYear: number;
+  sortOrder: number;
+  status: "active" | "archived";
+};
+
+export type ParentPortalSummary = {
+  student: StudentSummary;
+  reports: Array<ReportData & { id: string; academicPeriodId?: string }>;
+};
+
 export type ParentAccessInput = {
   token: string;
   birthYYMMDD: string;
   phoneLast4: string;
   pin: string;
 };
-

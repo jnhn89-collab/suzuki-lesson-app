@@ -10,7 +10,7 @@ export default function HomePage() {
           선생님이 기간 평가를 작성하고, 학부모는 보안 인증 후 모바일 보고서와 PDF를 확인하는
           앱입니다. 현재는 Supabase 연결 전 데모 흐름까지 구현되어 있습니다.
         </p>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <Link
             href="/teacher/reports/new"
             className="rounded-2xl bg-slate-950 px-5 py-4 text-center font-black text-white hover:bg-slate-800"
@@ -21,11 +21,16 @@ export default function HomePage() {
             href="/r/demo-token"
             className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center font-black text-slate-900 hover:bg-slate-50"
           >
-            학부모 인증 데모
+            단일 보고서 인증 데모
+          </Link>
+          <Link
+            href="/p/demo-portal"
+            className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center font-black text-emerald-900 hover:bg-emerald-100"
+          >
+            학생 포털 인증 데모
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

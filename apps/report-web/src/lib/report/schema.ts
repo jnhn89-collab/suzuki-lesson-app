@@ -52,6 +52,10 @@ export const studentInputSchema = z.object({
   parentPhoneLast4: z.string().regex(/^\d{4}$/, "휴대폰 뒷자리 4자리를 입력하세요."),
   currentPiece: z.string().trim().max(160),
   ageGroup: z.string().trim().max(20),
+  schoolName: z.string().trim().min(1).max(120),
+  enrollmentYear: z.number().int().min(2000).max(2100),
+  registrationYear: z.number().int().min(2000).max(2100),
+  registrationSequence: z.number().int().min(1).max(9999),
 });
 
 export const parentAccessSchema = z.object({
@@ -63,3 +67,29 @@ export const parentAccessSchema = z.object({
 
 export type ReportDraftInput = z.infer<typeof reportDraftSchema>;
 export type ParentAccessSchemaInput = z.infer<typeof parentAccessSchema>;
+
+export const academicPeriodSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    periodType: z.enum(["semester", "quarter", "custom"]),
+    startsOn: dateString,
+    endsOn: dateString,
+    schoolYear: z.number().int().min(2000).max(2100),
+    sortOrder: z.number().int().min(0).max(999),
+  })
+  .refine((value) => value.startsOn <= value.endsOn, {
+    path: ["endsOn"],
+    message: "종료일은 시작일 이후여야 합니다.",
+  });
+
+export function buildStudentCode(input: {
+  schoolName: string;
+  registrationYear: number;
+  registrationSequence: number;
+}) {
+  const normalizedSchool = input.schoolName
+    .replace(/초등학교|초교|학교|\s/g, "")
+    .toUpperCase()
+    .slice(0, 12);
+  return `${input.registrationYear}-${normalizedSchool || "STUDIO"}-${String(input.registrationSequence).padStart(3, "0")}`;
+}
