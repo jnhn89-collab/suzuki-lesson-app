@@ -46,11 +46,10 @@ export function categoryLabel(id: ScoreCategoryId) {
 
 export function buildPeriodSummary(report: ReportData) {
   const insight = getScoreInsight(report.scores);
-  return `${report.studentName}: ${report.periodName} 동안 ${report.currentPiece}에서 ${insight.top.label}이 특히 좋아졌습니다. 다음 기간에는 ${insight.growth.label}을 중심으로 짧고 정확하게 반복해 보겠습니다.`;
+  return `${report.studentName}: ${report.periodName} 동안 ${report.currentPiece}에서 특히 좋아진 부분은 ${insight.top.label}입니다. 다음 기간에는 ${insight.growth.label}을 중심으로 짧고 정확하게 반복해 보겠습니다.`;
 }
 
 export function buildTeacherSummary(report: ReportData) {
   const insight = getScoreInsight(report.scores);
   return `${report.periodName} 동안 ${insight.top.label} 영역이 안정적으로 자리 잡았습니다. ${insight.growth.label}은 아직 손에 익는 중이라, 다음 기간에는 속도를 올리기보다 좋은 소리와 바른 움직임을 먼저 확인하겠습니다.`;
 }
-
