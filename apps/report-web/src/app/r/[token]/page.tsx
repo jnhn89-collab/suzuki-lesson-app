@@ -11,10 +11,13 @@ export const metadata: Metadata = {
 
 export default async function ParentAccessPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { token } = await params;
+  const { error } = await searchParams;
 
   return (
     <main className="min-h-screen bg-[#fffdf8] px-4 py-8">
@@ -25,10 +28,9 @@ export default async function ParentAccessPage({
           학생 정보 보호를 위해 공유 링크 접속 후 한 번 더 확인합니다.
         </p>
         <div className="mt-6">
-          <ParentAccessForm token={token} />
+          <ParentAccessForm token={token} hasError={error === "1"} />
         </div>
       </section>
     </main>
   );
 }
-

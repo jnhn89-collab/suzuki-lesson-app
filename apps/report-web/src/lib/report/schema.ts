@@ -38,7 +38,7 @@ export const reportDraftSchema = z
     message: "종료일은 시작일 이후여야 합니다.",
   });
 
-export const reportPublishSchema = reportDraftSchema.extend({
+export const reportPublishSchema = reportDraftSchema.safeExtend({
   strengths: z.string().trim().min(10).max(3000),
   growthArea: z.string().trim().min(10).max(3000),
   homeSupport: z.string().trim().min(10).max(3000),
@@ -63,4 +63,3 @@ export const parentAccessSchema = z.object({
 
 export type ReportDraftInput = z.infer<typeof reportDraftSchema>;
 export type ParentAccessSchemaInput = z.infer<typeof parentAccessSchema>;
-
