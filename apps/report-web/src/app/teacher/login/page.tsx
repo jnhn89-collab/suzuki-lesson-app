@@ -2,6 +2,8 @@ import Link from "next/link";
 import { hasSupabaseEnv } from "@/lib/env";
 import { signInTeacherAction, signUpTeacherAction } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function TeacherLoginPage({
   searchParams,
 }: {

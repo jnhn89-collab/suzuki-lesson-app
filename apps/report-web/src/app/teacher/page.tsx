@@ -4,6 +4,8 @@ import { hasSupabaseAdminEnv, hasSupabaseEnv, hasParentSecurityEnv } from "@/lib
 import { getTeacherHomeData } from "@/lib/teacher/data";
 import { signOutTeacherAction } from "./login/actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function TeacherDashboardPage() {
   const data = await getTeacherHomeData();
   const isConfigured = hasSupabaseEnv();

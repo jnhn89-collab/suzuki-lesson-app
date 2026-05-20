@@ -6,6 +6,8 @@ import { getTeacherPeriodsPageData } from "@/lib/teacher/data";
 
 const currentYear = new Date().getFullYear();
 
+export const dynamic = "force-dynamic";
+
 export default async function TeacherPeriodsPage({
   searchParams,
 }: {
