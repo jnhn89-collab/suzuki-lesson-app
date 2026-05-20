@@ -7,6 +7,7 @@ import {
   createPublicToken,
   hashToken,
   hmacIdentifier,
+  parsePortalLinkToken,
   safeEqualString,
   verifyPassword,
 } from "@/lib/security";
@@ -48,14 +49,11 @@ export async function verifyParentPortalAccess(
 
   const pepper = requireEnv("PARENT_ACCESS_PEPPER");
   const supabase = createSupabaseAdminClient();
-  const tokenHash = hashToken(input.token);
-  const { data: link } = await supabase
-    .from("parent_portal_links")
-    .select(
-      "id,student_id,parent_id,pin_hash,max_attempts,failed_attempts,locked_until,expires_at,revoked_at",
-    )
-    .eq("token_hash", tokenHash)
-    .maybeSingle();
+  const link = await loadPortalLinkForToken(
+    supabase,
+    input.token,
+    "id,student_id,parent_id,pin_hash,max_attempts,failed_attempts,locked_until,expires_at,revoked_at",
+  );
 
   if (!link || isRevokedOrExpired(link)) {
     return { ok: false };
@@ -123,11 +121,11 @@ async function getParentPortalSummaryFromDatabase(
   sessionToken: string,
 ): Promise<ParentPortalSummary | null> {
   const supabase = createSupabaseAdminClient();
-  const { data: link } = await supabase
-    .from("parent_portal_links")
-    .select("id,student_id,parent_id,expires_at,revoked_at")
-    .eq("token_hash", hashToken(token))
-    .maybeSingle();
+  const link = await loadPortalLinkForToken(
+    supabase,
+    token,
+    "id,student_id,parent_id,expires_at,revoked_at",
+  );
 
   if (!link || isRevokedOrExpired(link)) return null;
 
@@ -185,6 +183,24 @@ async function getParentPortalSummaryFromDatabase(
     },
     reports: (reports ?? []).map((report) => mapReport(report, student.name, teacherName)),
   };
+}
+
+async function loadPortalLinkForToken<Select extends string>(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  token: string,
+  select: Select,
+) {
+  const linkId = parsePortalLinkToken(token);
+  let query = supabase.from("parent_portal_links").select(select);
+
+  if (linkId) {
+    query = query.eq("id", linkId);
+  } else {
+    query = query.eq("token_hash", hashToken(token));
+  }
+
+  const { data } = await query.maybeSingle();
+  return data;
 }
 
 async function loadParentForLink(

@@ -1,8 +1,8 @@
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { hasParentSecurityEnv, hasSupabaseAdminEnv, hasSupabaseEnv } from "@/lib/env";
 import { reportStoreSchema } from "@/lib/report/schema";
-import { createPublicToken, hashPassword, hashToken } from "@/lib/security";
+import { createPortalLinkToken, hashPassword, hashToken } from "@/lib/security";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureTeacherProfile } from "@/lib/teacher/session";
 
@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const parsed = reportStoreSchema.safeParse(body);
+  const resetPortalPin = Boolean(body?.resetPortalPin);
 
   if (!parsed.success) {
     return NextResponse.json({ error: "보고서 입력값을 확인해 주세요." }, { status: 400 });
@@ -87,29 +88,105 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "보고서 저장에 실패했습니다." }, { status: 500 });
   }
 
-  const portalToken = createPublicToken();
-  const portalPin = createPin();
-  const { error: portalError } = await supabase.from("parent_portal_links").insert({
-    teacher_id: user.id,
-    student_id: report.studentId,
-    parent_id: parent?.id ?? null,
-    token_hash: hashToken(portalToken),
-    pin_hash: hashPassword(portalPin),
+  const portalAccess = await getOrCreateStudentPortalAccess({
+    supabase,
+    request,
+    teacherId: user.id,
+    studentId: report.studentId,
+    parentId: parent?.id ?? null,
+    resetPortalPin,
   });
 
-  if (portalError) {
+  if (!portalAccess) {
     return NextResponse.json(
-      { error: "보고서는 저장됐지만 학부모 포털 링크 생성에 실패했습니다." },
+      { error: "보고서는 저장됐지만 학생 포털 링크 처리에 실패했습니다." },
       { status: 500 },
     );
   }
 
   return NextResponse.json({
     reportId: savedReport.id,
-    portalUrl: new URL(`/p/${portalToken}`, request.url).toString(),
-    portalPin,
+    portalUrl: portalAccess.portalUrl,
+    portalPin: portalAccess.portalPin,
+    portalPinStatus: portalAccess.portalPinStatus,
     teacherName: profile.name || report.teacherName,
   });
+}
+
+async function getOrCreateStudentPortalAccess({
+  supabase,
+  request,
+  teacherId,
+  studentId,
+  parentId,
+  resetPortalPin,
+}: {
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  request: NextRequest;
+  teacherId: string;
+  studentId: string;
+  parentId: string | null;
+  resetPortalPin: boolean;
+}) {
+  const { data: existing, error: existingError } = await supabase
+    .from("parent_portal_links")
+    .select("id,expires_at,revoked_at")
+    .eq("teacher_id", teacherId)
+    .eq("student_id", studentId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) return null;
+
+  if (existing && !isExpired(existing.expires_at)) {
+    const portalPin = resetPortalPin ? createPin() : null;
+    if (portalPin) {
+      const { error } = await supabase
+        .from("parent_portal_links")
+        .update({
+          pin_hash: hashPassword(portalPin),
+          failed_attempts: 0,
+          locked_until: null,
+        })
+        .eq("id", existing.id);
+
+      if (error) return null;
+    }
+
+    const token = createPortalLinkToken(existing.id);
+    return {
+      portalUrl: new URL(`/p/${token}`, request.url).toString(),
+      portalPin,
+      portalPinStatus: portalPin ? "reset" : "existing",
+    };
+  }
+
+  const linkId = randomUUID();
+  const portalToken = createPortalLinkToken(linkId);
+  const portalPin = createPin();
+  const { error: portalError } = await supabase.from("parent_portal_links").insert({
+    id: linkId,
+    teacher_id: teacherId,
+    student_id: studentId,
+    parent_id: parentId,
+    token_hash: hashToken(portalToken),
+    pin_hash: hashPassword(portalPin),
+  });
+
+  if (portalError) return null;
+
+  return {
+    portalUrl: new URL(`/p/${portalToken}`, request.url).toString(),
+    portalPin,
+    portalPinStatus: "created",
+  };
+}
+
+function isExpired(expiresAt: string | null) {
+  if (!expiresAt) return false;
+  return new Date(expiresAt).getTime() <= Date.now();
 }
 
 function createPin() {
