@@ -11,21 +11,36 @@ export function ParentPortalView({
   student: StudentSummary;
   reports: Array<ReportData & { id: string }>;
 }) {
+  const latestReport = reports[0];
+
   return (
     <main className="min-h-screen bg-[#fffdf8] px-4 py-6">
       <section className="mx-auto max-w-3xl">
         <div className="rounded-3xl border border-[#e5ded2] bg-white p-5 shadow-sm">
-          <p className="text-xs font-black text-blue-700">학생 보고서 포털</p>
-          <h1 className="mt-2 text-2xl font-black text-slate-950">{student.name}</h1>
+          <p className="text-xs font-black text-blue-700">학부모 보고서함</p>
+          <h1 className="mt-2 text-2xl font-black text-slate-950">{student.name} 보고서</h1>
           <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-            <Meta label="학생 식별자" value={student.studentCode} />
+            <Meta label="학생 코드" value={student.studentCode || "등록 대기"} />
             <Meta label="학교/등록연도" value={`${student.schoolName} · ${student.enrollmentYear}`} />
             <Meta label="현재 진도" value={student.currentPiece} />
             <Meta label="보고서 수" value={`${reports.length}개`} />
           </dl>
+          {latestReport ? (
+            <Link
+              href={`/p/${token}/reports/${latestReport.id}`}
+              className="mt-4 block rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white"
+            >
+              최신 보고서 바로 보기
+            </Link>
+          ) : null}
         </div>
 
         <div className="mt-5 space-y-3">
+          {reports.length === 0 ? (
+            <div className="rounded-3xl border border-[#e5ded2] bg-white p-5 text-sm font-bold leading-6 text-slate-600 shadow-sm">
+              아직 공개된 보고서가 없습니다. 선생님이 보고서를 발행하면 이곳에 기간별로 쌓입니다.
+            </div>
+          ) : null}
           {reports.map((report) => {
             const insight = getScoreInsight(report.scores);
             return (
@@ -72,4 +87,3 @@ function Badge({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

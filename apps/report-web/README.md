@@ -8,10 +8,8 @@
 - 학생 등록/관리: `/teacher/students`
 - 학기/분기 관리: `/teacher/periods`
 - 선생님 보고서 작성 및 DB 발행: `/teacher/reports/new`
-- 학부모 인증 데모: `/r/demo-token`
-- 인증 후 학부모 모바일 보고서: `/r/demo-token/view`
-- 학생 포털 인증 데모: `/p/demo-portal`
-- 학생 포털 보고서 목록: `/p/demo-portal/reports`
+- 학부모 보고서함 데모: `/p/demo-portal`
+- 학부모 보고서함 목록: `/p/demo-portal/reports`
 - PDF 저장: 브라우저 인쇄 기반
 - Supabase migration: `supabase/migrations/`
 
@@ -45,10 +43,11 @@ PARENT_ACCESS_PEPPER
 
 ## 공유 모델
 
-- `/r/:token`: 단일 보고서 공유 링크
-- `/p/:token`: 학생별 학부모 포털 링크
-- 학부모 포털에서는 발행된 여러 학기/분기 보고서를 목록으로 확인합니다.
+- `/p/:token`: 학생별 학부모 보고서함 링크. 운영 기본 경로입니다.
+- 학부모 보고서함에서는 발행된 여러 학기/분기 보고서를 목록으로 확인합니다.
 - 학생 식별자는 학교명, 등록연도, 등록순번을 조합한 `student_code`를 사용합니다.
+- 보고서함 링크는 opaque token으로 발급하고 DB에는 token hash만 저장합니다.
+- PIN은 학생 보고서함 단위로 유지하며, 링크/PIN을 잊었을 때만 재발급합니다.
 
 ## 브랜치 운영
 

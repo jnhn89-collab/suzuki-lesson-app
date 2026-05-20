@@ -19,8 +19,8 @@ export default async function TeacherDashboardPage() {
           <div>
             <h1 className="text-3xl font-black text-slate-950">선생님 대시보드</h1>
             <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-              학생, 학기/분기, 발행 보고서를 DB 기준으로 관리합니다. 개발은 `dev` 브랜치에서
-              진행하고 검증 후 `main`으로 합치는 구조가 맞습니다.
+              학생, 학기/분기, 발행 보고서를 관리하고 학부모에게 공유할 보고서함 링크를
+              발급합니다.
             </p>
           </div>
           {data.context.status === "ready" ? (
@@ -52,11 +52,11 @@ export default async function TeacherDashboardPage() {
           </Notice>
         ) : null}
         {isConfigured && data.context.status === "signed_out" ? (
-          <Notice tone="blue">DB 저장을 하려면 선생님 로그인이 필요합니다.</Notice>
+          <Notice tone="blue">보고서를 저장하려면 선생님 로그인이 필요합니다.</Notice>
         ) : null}
         {isConfigured && !canVerifyParents ? (
           <Notice tone="amber">
-            학부모 포털 인증까지 쓰려면 `SUPABASE_SERVICE_ROLE_KEY`와 `PARENT_ACCESS_PEPPER`가
+            학부모 보고서함 인증까지 쓰려면 `SUPABASE_SERVICE_ROLE_KEY`와 `PARENT_ACCESS_PEPPER`가
             필요합니다.
           </Notice>
         ) : null}
@@ -84,16 +84,16 @@ export default async function TeacherDashboardPage() {
             href="/p/demo-portal"
             className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center font-black text-slate-900"
           >
-            학생 포털 인증 데모
+            학부모 보고서함 데모
           </Link>
         </div>
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-black text-slate-950">확장된 관리 모델</h2>
+          <h2 className="text-lg font-black text-slate-950">운영 기준</h2>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             <li>학생 식별자 예: 2026-한빛-001</li>
             <li>학교명, 등록연도, 등록순번으로 학생을 안정적으로 구분합니다.</li>
-            <li>학부모는 학생 포털에서 여러 학기/분기 보고서를 목록으로 봅니다.</li>
-            <li>보고서 하나짜리 링크는 유지하되, 운영 기본은 학생 포털 링크입니다.</li>
+            <li>학부모는 보고서함에서 여러 학기/분기 보고서를 목록으로 봅니다.</li>
+            <li>보고서를 추가해도 기존 보고서함 링크와 PIN을 계속 사용할 수 있습니다.</li>
           </ul>
         </div>
       </section>

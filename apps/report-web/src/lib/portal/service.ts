@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 import { getDemoPortalData } from "@/lib/demo";
 import { hasParentSecurityEnv, hasSupabaseAdminEnv, requireEnv } from "@/lib/env";
@@ -7,7 +9,6 @@ import {
   createPublicToken,
   hashToken,
   hmacIdentifier,
-  parsePortalLinkToken,
   safeEqualString,
   verifyPassword,
 } from "@/lib/security";
@@ -52,7 +53,7 @@ export async function verifyParentPortalAccess(
   const link = await loadPortalLinkForToken(
     supabase,
     input.token,
-    "id,student_id,parent_id,pin_hash,max_attempts,failed_attempts,locked_until,expires_at,revoked_at",
+    "id,teacher_id,student_id,parent_id,pin_hash,max_attempts,failed_attempts,locked_until,expires_at,revoked_at",
   );
 
   if (!link || isRevokedOrExpired(link)) {
@@ -68,8 +69,9 @@ export async function verifyParentPortalAccess(
       .from("students")
       .select("id,birth_yymmdd_hmac,status")
       .eq("id", link.student_id)
+      .eq("teacher_id", link.teacher_id)
       .maybeSingle(),
-    loadParentForLink(supabase, link.student_id, link.parent_id),
+    loadParentForLink(supabase, link.teacher_id, link.student_id, link.parent_id),
   ]);
   const parent = parentResult.data;
 
@@ -124,7 +126,7 @@ async function getParentPortalSummaryFromDatabase(
   const link = await loadPortalLinkForToken(
     supabase,
     token,
-    "id,student_id,parent_id,expires_at,revoked_at",
+    "id,teacher_id,student_id,parent_id,expires_at,revoked_at",
   );
 
   if (!link || isRevokedOrExpired(link)) return null;
@@ -146,6 +148,7 @@ async function getParentPortalSummaryFromDatabase(
         "id,teacher_id,student_code,name,school_name,enrollment_year,registration_year,registration_sequence,age_group,current_piece,status",
       )
       .eq("id", link.student_id)
+      .eq("teacher_id", link.teacher_id)
       .maybeSingle(),
     supabase
       .from("reports")
@@ -153,6 +156,7 @@ async function getParentPortalSummaryFromDatabase(
         "id,academic_period_id,period_name,period_start,period_end,total_lessons,completed_pieces,current_piece,scores_json,focus_tags_json,strengths,growth_area,home_support,practice_plan,daily_minutes,daily_reps,status,teacher_id",
       )
       .eq("student_id", link.student_id)
+      .eq("teacher_id", link.teacher_id)
       .eq("visible_to_parent", true)
       .eq("status", "published")
       .order("period_start", { ascending: false }),
@@ -163,7 +167,7 @@ async function getParentPortalSummaryFromDatabase(
   const { data: teacher } = await supabase
     .from("teacher_profiles")
     .select("id,name,studio_name")
-    .eq("id", student.teacher_id)
+    .eq("id", link.teacher_id)
     .maybeSingle();
 
   const teacherName = teacher?.name || teacher?.studio_name || "담당 선생님";
@@ -190,27 +194,24 @@ async function loadPortalLinkForToken<Select extends string>(
   token: string,
   select: Select,
 ) {
-  const linkId = parsePortalLinkToken(token);
-  let query = supabase.from("parent_portal_links").select(select);
-
-  if (linkId) {
-    query = query.eq("id", linkId);
-  } else {
-    query = query.eq("token_hash", hashToken(token));
-  }
-
-  const { data } = await query.maybeSingle();
+  const { data } = await supabase
+    .from("parent_portal_links")
+    .select(select)
+    .eq("token_hash", hashToken(token))
+    .maybeSingle();
   return data;
 }
 
 async function loadParentForLink(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
+  teacherId: string,
   studentId: string,
   parentId: string | null,
 ) {
   let query = supabase
     .from("parents")
     .select("id,phone_last4_hmac,status")
+    .eq("teacher_id", teacherId)
     .eq("student_id", studentId)
     .eq("status", "active")
     .limit(1);
@@ -227,14 +228,21 @@ async function recordFailure(linkId: string, failedAttempts: number, maxAttempts
   const lockedUntil =
     failedAttempts + 1 >= maxAttempts ? new Date(Date.now() + 1000 * 60 * 15).toISOString() : null;
 
-  await supabase
-    .from("parent_portal_links")
-    .update({
-      failed_attempts: failedAttempts + 1,
-      locked_until: lockedUntil,
-      last_failed_at: new Date().toISOString(),
-    })
-    .eq("id", linkId);
+  const { error } = await supabase.rpc("increment_parent_portal_link_failure", {
+    p_link_id: linkId,
+    p_locked_until: lockedUntil,
+  });
+
+  if (error) {
+    await supabase
+      .from("parent_portal_links")
+      .update({
+        failed_attempts: failedAttempts + 1,
+        locked_until: lockedUntil,
+        last_failed_at: new Date().toISOString(),
+      })
+      .eq("id", linkId);
+  }
 }
 
 function isRevokedOrExpired(value: {
@@ -242,7 +250,7 @@ function isRevokedOrExpired(value: {
   expires_at?: string | null;
 }) {
   if (value.revoked_at) return true;
-  if (!value.expires_at) return false;
+  if (!value.expires_at) return true;
   return new Date(value.expires_at).getTime() <= Date.now();
 }
 

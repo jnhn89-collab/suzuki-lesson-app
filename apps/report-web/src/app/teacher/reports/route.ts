@@ -1,10 +1,12 @@
-import { randomInt, randomUUID } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { hasParentSecurityEnv, hasSupabaseAdminEnv, hasSupabaseEnv } from "@/lib/env";
 import { reportStoreSchema } from "@/lib/report/schema";
 import { createPortalLinkToken, hashPassword, hashToken } from "@/lib/security";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureTeacherProfile } from "@/lib/teacher/session";
+
+const PORTAL_LINK_TTL_DAYS = 730;
 
 export async function POST(request: NextRequest) {
   if (!hasSupabaseEnv()) {
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
     .eq("student_id", report.studentId)
     .eq("teacher_id", user.id)
     .eq("status", "active")
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
 
   if (!portalAccess) {
     return NextResponse.json(
-      { error: "보고서는 저장됐지만 학생 포털 링크 처리에 실패했습니다." },
+      { error: "보고서는 저장됐지만 학부모 보고서함 링크 처리에 실패했습니다." },
       { status: 500 },
     );
   }
@@ -130,7 +132,7 @@ async function getOrCreateStudentPortalAccess({
 }) {
   const { data: existing, error: existingError } = await supabase
     .from("parent_portal_links")
-    .select("id,expires_at,revoked_at")
+    .select("id,parent_id,pin_hash,expires_at,revoked_at")
     .eq("teacher_id", teacherId)
     .eq("student_id", studentId)
     .is("revoked_at", null)
@@ -141,54 +143,120 @@ async function getOrCreateStudentPortalAccess({
   if (existingError) return null;
 
   if (existing && !isExpired(existing.expires_at)) {
-    const portalPin = resetPortalPin ? createPin() : null;
-    if (portalPin) {
-      const { error } = await supabase
-        .from("parent_portal_links")
-        .update({
-          pin_hash: hashPassword(portalPin),
-          failed_attempts: 0,
-          locked_until: null,
-        })
-        .eq("id", existing.id);
-
-      if (error) return null;
+    if (!resetPortalPin) {
+      return createPortalAccessLink({
+        supabase,
+        request,
+        teacherId,
+        studentId,
+        parentId: existing.parent_id ?? parentId,
+        pinHash: existing.pin_hash,
+        portalPin: null,
+        portalPinStatus: "existing",
+      });
     }
 
-    const token = createPortalLinkToken(existing.id);
-    return {
-      portalUrl: new URL(`/p/${token}`, request.url).toString(),
+    const portalPin = createPin();
+    const nextAccess = await createPortalAccessLink({
+      supabase,
+      request,
+      teacherId,
+      studentId,
+      parentId: existing.parent_id ?? parentId,
+      pinHash: hashPassword(portalPin),
       portalPin,
-      portalPinStatus: portalPin ? "reset" : "existing",
-    };
+      portalPinStatus: "reset",
+    });
+
+    if (!nextAccess) return null;
+
+    await supabase
+      .from("parent_portal_links")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("teacher_id", teacherId)
+      .eq("student_id", studentId)
+      .neq("id", nextAccess.linkId)
+      .is("revoked_at", null);
+
+    return nextAccess;
   }
 
-  const linkId = randomUUID();
-  const portalToken = createPortalLinkToken(linkId);
+  if (existing && isExpired(existing.expires_at)) {
+    await supabase
+      .from("parent_portal_links")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("id", existing.id);
+  }
+
   const portalPin = createPin();
-  const { error: portalError } = await supabase.from("parent_portal_links").insert({
-    id: linkId,
-    teacher_id: teacherId,
-    student_id: studentId,
-    parent_id: parentId,
-    token_hash: hashToken(portalToken),
-    pin_hash: hashPassword(portalPin),
-  });
-
-  if (portalError) return null;
-
-  return {
-    portalUrl: new URL(`/p/${portalToken}`, request.url).toString(),
+  return createPortalAccessLink({
+    supabase,
+    request,
+    teacherId,
+    studentId,
+    parentId,
+    pinHash: hashPassword(portalPin),
     portalPin,
     portalPinStatus: "created",
+  });
+}
+
+async function createPortalAccessLink({
+  supabase,
+  request,
+  teacherId,
+  studentId,
+  parentId,
+  pinHash,
+  portalPin,
+  portalPinStatus,
+}: {
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  request: NextRequest;
+  teacherId: string;
+  studentId: string;
+  parentId: string | null;
+  pinHash: string;
+  portalPin: string | null;
+  portalPinStatus: "created" | "existing" | "reset";
+}) {
+  const portalToken = createPortalLinkToken();
+  const expiresAt = getPortalExpiryDate();
+  const { data, error: portalError } = await supabase
+    .from("parent_portal_links")
+    .insert({
+      teacher_id: teacherId,
+      student_id: studentId,
+      parent_id: parentId,
+      token_hash: hashToken(portalToken),
+      pin_hash: pinHash,
+      expires_at: expiresAt.toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (portalError || !data) return null;
+
+  return {
+    linkId: data.id,
+    portalUrl: new URL(`/p/${portalToken}`, request.url).toString(),
+    portalPin,
+    portalPinStatus,
+    expiresAt: expiresAt.toISOString(),
   };
 }
 
 function isExpired(expiresAt: string | null) {
-  if (!expiresAt) return false;
+  if (!expiresAt) return true;
   return new Date(expiresAt).getTime() <= Date.now();
 }
 
 function createPin() {
   return String(randomInt(100000, 1000000));
+}
+
+function getPortalExpiryDate() {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + PORTAL_LINK_TTL_DAYS);
+  return expiresAt;
 }

@@ -15,9 +15,10 @@ type PresetTarget = "strengths" | "growthArea" | "homeSupport" | "practicePlan";
 type PresetGroupName = keyof typeof presetGroups;
 type PublishResult = {
   reportId: string;
-  portalUrl: string;
+  portalUrl: string | null;
   portalPin: string | null;
   portalPinStatus: "created" | "existing" | "reset";
+  expiresAt?: string | null;
 };
 
 export function ReportEditor({
@@ -51,7 +52,7 @@ export function ReportEditor({
   const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [resetPortalPin, setResetPortalPin] = useState(false);
-  const parentDemoUrl = useMemo(() => "/r/demo-token", []);
+  const parentDemoUrl = useMemo(() => "/p/demo-portal", []);
 
   function update<K extends keyof ReportData>(key: K, value: ReportData[K]) {
     setReport((current) => ({ ...current, [key]: value }));
@@ -155,8 +156,8 @@ export function ReportEditor({
           <h1 className="mt-1 text-xl font-black">분기/학기 성과보고서</h1>
           <p className="mt-2 text-sm leading-6 text-slate-300">
             {canSaveToDatabase
-              ? "학생과 기간을 선택해 작성하면 발행본이 DB에 저장되고 학생별 학부모 포털에 누적됩니다."
-              : "DB 환경변수 또는 선생님 로그인이 없으면 데모 작성과 PDF 미리보기만 사용할 수 있습니다."}
+              ? "학생과 기간을 선택해 작성하면 발행본이 학부모 보고서함에 기간별로 누적됩니다."
+              : "선생님 로그인이 없으면 데모 작성과 PDF 미리보기만 사용할 수 있습니다."}
           </p>
         </div>
 
@@ -239,6 +240,22 @@ export function ReportEditor({
                   min="0"
                   value={report.completedPieces}
                   onChange={(event) => update("completedPieces", Number(event.target.value))}
+                />
+              </Field>
+              <Field label="하루 연습 분">
+                <input
+                  type="number"
+                  min="0"
+                  value={report.dailyMinutes}
+                  onChange={(event) => update("dailyMinutes", Number(event.target.value))}
+                />
+              </Field>
+              <Field label="핵심 반복 횟수">
+                <input
+                  type="number"
+                  min="0"
+                  value={report.dailyReps}
+                  onChange={(event) => update("dailyReps", Number(event.target.value))}
                 />
               </Field>
             </div>
@@ -337,7 +354,7 @@ export function ReportEditor({
                   onChange={(event) => setResetPortalPin(event.target.checked)}
                   className="mt-1"
                 />
-                <span>학부모가 PIN을 잊었을 때만 새 학생 포털 PIN을 발급합니다.</span>
+                <span>학부모가 링크나 PIN을 잊었을 때만 새 보고서함 링크와 PIN을 발급합니다.</span>
               </label>
             ) : null}
             {canSaveToDatabase ? (
@@ -347,7 +364,7 @@ export function ReportEditor({
                 disabled={isPublishing || !selectedStudentId}
                 className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                {isPublishing ? "DB 저장 중" : "보고서를 학생 포털에 추가"}
+                {isPublishing ? "보고서 저장 중" : "학부모 보고서함에 추가"}
               </button>
             ) : null}
             <button
@@ -355,25 +372,31 @@ export function ReportEditor({
               onClick={saveDemoDraft}
               className="rounded-xl bg-blue-700 px-4 py-3 text-sm font-black text-white hover:bg-blue-800"
             >
-              데모 draft 저장
+              임시 저장
             </button>
             <a
               href={parentDemoUrl}
               className="rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-black text-white hover:bg-slate-800"
             >
-              학부모 인증 데모 열기
+              학부모 보고서함 데모 열기
             </a>
             <PrintButton label="미리보기 PDF 저장" />
             {publishResult ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
                 <p className="font-black">{getPortalResultTitle(publishResult.portalPinStatus)}</p>
-                <a href={publishResult.portalUrl} className="mt-1 block break-all font-bold underline">
-                  {publishResult.portalUrl}
-                </a>
-                {publishResult.portalPin ? (
-                  <p className="mt-1 font-bold">학생 포털 PIN: {publishResult.portalPin}</p>
+                {publishResult.portalUrl ? (
+                  <a href={publishResult.portalUrl} className="mt-1 block break-all font-bold underline">
+                    {publishResult.portalUrl}
+                  </a>
                 ) : (
-                  <p className="mt-1 font-bold">PIN은 기존 학생 포털 PIN을 그대로 사용합니다.</p>
+                  <p className="mt-1 font-bold">
+                    기존에 전달한 학부모 보고서함 링크에서 새 보고서를 바로 볼 수 있습니다.
+                  </p>
+                )}
+                {publishResult.portalPin ? (
+                  <p className="mt-1 font-bold">보고서함 PIN: {publishResult.portalPin}</p>
+                ) : (
+                  <p className="mt-1 font-bold">PIN은 기존 보고서함 PIN을 그대로 사용합니다.</p>
                 )}
               </div>
             ) : null}
@@ -395,9 +418,9 @@ export function ReportEditor({
 }
 
 function getPortalResultTitle(status: PublishResult["portalPinStatus"]) {
-  if (status === "created") return "학생 포털 링크와 PIN이 처음 생성되었습니다.";
-  if (status === "reset") return "보고서가 추가되고 학생 포털 PIN이 재발급되었습니다.";
-  return "보고서가 기존 학생 포털에 추가되었습니다.";
+  if (status === "created") return "학부모 보고서함 링크와 PIN이 처음 생성되었습니다.";
+  if (status === "reset") return "보고서가 추가되고 보고서함 링크와 PIN이 재발급되었습니다.";
+  return "보고서가 기존 학부모 보고서함에 추가되었습니다.";
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createClient } from "@supabase/supabase-js";
 import { requireEnv } from "../env";
 
@@ -13,4 +15,3 @@ export function createSupabaseAdminClient() {
     },
   );
 }
-

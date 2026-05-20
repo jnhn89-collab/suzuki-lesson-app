@@ -1,0 +1,98 @@
+[
+  {
+    "id": "SRC-SZ-001",
+    "title": "About the Suzuki Method",
+    "publisher": "Suzuki Association of the Americas",
+    "url": "https://suzukiassociation.org/about/about-the-suzuki-method/",
+    "last_verified": "2026-05-21",
+    "used_for": ["suzuki principles", "family involvement", "positive environment"]
+  },
+  {
+    "id": "SRC-SZ-002",
+    "title": "Embracing Suzuki Parents: Every Parent Can",
+    "publisher": "Suzuki Association of the Americas",
+    "url": "https://suzukiassociation.org/journalarticle/embracing-suzuki-parents-every-parent-can/",
+    "last_verified": "2026-05-21",
+    "used_for": ["teacher-parent-child cooperation", "parent support framing"]
+  },
+  {
+    "id": "SRC-SZ-003",
+    "title": "Regional Associations",
+    "publisher": "International Suzuki Association",
+    "url": "https://internationalsuzuki.org/regional-associations",
+    "last_verified": "2026-05-21",
+    "used_for": ["regional localization", "ARSA context"]
+  },
+  {
+    "id": "SRC-ME-001",
+    "title": "Building and Evaluating Effective Music Education in General Music",
+    "publisher": "NAfME",
+    "url": "https://nafme.org/wp-content/uploads/2023/09/NAfME-GENERAL-MUSIC-EVALUATION-WORKBOOK-2016.pdf",
+    "last_verified": "2026-05-21",
+    "used_for": ["family communication", "student progress reporting"]
+  },
+  {
+    "id": "SRC-KR-001",
+    "title": "Education System",
+    "publisher": "Seoul Metropolitan Office of Education",
+    "url": "https://english.sen.go.kr/english/education/system.jsp",
+    "last_verified": "2026-05-21",
+    "used_for": ["Korea semester timing"]
+  },
+  {
+    "id": "SRC-KR-002",
+    "title": "Private Education Expenditure",
+    "publisher": "Statistics Korea",
+    "url": "https://www.kostat.go.kr/menu.es?mid=a20111020000",
+    "last_verified": "2026-05-21",
+    "used_for": ["Korea private education context"]
+  },
+  {
+    "id": "SRC-PR-001",
+    "title": "Children's Privacy",
+    "publisher": "Federal Trade Commission",
+    "url": "https://www.ftc.gov/business-guidance/privacy-security/childrens-privacy",
+    "last_verified": "2026-05-21",
+    "used_for": ["COPPA", "child privacy"]
+  },
+  {
+    "id": "SRC-PR-002",
+    "title": "Personal Information Protection Commission Leaflet",
+    "publisher": "Personal Information Protection Commission Korea",
+    "url": "https://pipc.go.kr/eng/font/2021_PIPC_leaflet.pdf",
+    "last_verified": "2026-05-21",
+    "used_for": ["Korea personal information examples", "privacy risk framing"]
+  },
+  {
+    "id": "SRC-SEC-001",
+    "title": "Row Level Security",
+    "publisher": "Supabase",
+    "url": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "last_verified": "2026-05-21",
+    "used_for": ["RLS with check", "tenant ownership"]
+  },
+  {
+    "id": "SRC-SEC-002",
+    "title": "Vercel Integration: Environment variables explained",
+    "publisher": "Supabase",
+    "url": "https://supabase.com/docs/guides/troubleshooting/vercel-integration-environment-variables-not-syncing-for-persistent-git-branches-b9191e",
+    "last_verified": "2026-05-21",
+    "used_for": ["Vercel preview/production env separation"]
+  },
+  {
+    "id": "SRC-A11Y-001",
+    "title": "Mobile Accessibility at W3C",
+    "publisher": "W3C WAI",
+    "url": "https://www.w3.org/WAI/standards-guidelines/mobile/",
+    "last_verified": "2026-05-21",
+    "used_for": ["mobile accessibility gate"]
+  },
+  {
+    "id": "SRC-A11Y-002",
+    "title": "WCAG 2.2",
+    "publisher": "W3C",
+    "url": "https://www.w3.org/TR/WCAG22/",
+    "last_verified": "2026-05-21",
+    "used_for": ["accessibility testable statements"]
+  }
+]
