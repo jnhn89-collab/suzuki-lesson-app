@@ -8,6 +8,20 @@ import type {
 } from "@/lib/report/types";
 import { getTeacherContext } from "./session";
 
+export type RecentReportItem = {
+  id: string;
+  studentName: string;
+  periodName: string;
+  publishedAt: string | null;
+};
+
+export type ActivePeriodItem = {
+  id: string;
+  name: string;
+  startsOn: string;
+  endsOn: string;
+};
+
 export async function getTeacherHomeData() {
   const context = await getTeacherContext();
   if (context.status !== "ready") {
@@ -16,20 +30,61 @@ export async function getTeacherHomeData() {
       studentCount: 0,
       periodCount: 0,
       reportCount: 0,
+      recentReports: [] as RecentReportItem[],
+      activePeriods: [] as ActivePeriodItem[],
     };
   }
 
-  const [students, periods, reports] = await Promise.all([
+  const [students, periods, reports, recentReports, activePeriods] = await Promise.all([
     context.supabase.from("students").select("id", { count: "exact", head: true }),
     context.supabase.from("academic_periods").select("id", { count: "exact", head: true }),
     context.supabase.from("reports").select("id", { count: "exact", head: true }),
+    context.supabase
+      .from("reports")
+      .select("id, period_name, published_at, students(name)")
+      .eq("status", "published")
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(5),
+    context.supabase
+      .from("academic_periods")
+      .select("id, name, starts_on, ends_on, status")
+      .eq("status", "active")
+      .order("starts_on", { ascending: false })
+      .limit(3),
   ]);
+
+  type RecentReportRow = {
+    id: string;
+    period_name: string;
+    published_at: string | null;
+    students: { name: string } | { name: string }[] | null;
+  };
+
+  const recent: RecentReportItem[] = ((recentReports.data ?? []) as RecentReportRow[]).map((row) => {
+    const studentRel = row.students;
+    const studentName = Array.isArray(studentRel) ? studentRel[0]?.name : studentRel?.name;
+    return {
+      id: row.id,
+      studentName: studentName ?? "학생",
+      periodName: row.period_name,
+      publishedAt: row.published_at,
+    };
+  });
+
+  const active: ActivePeriodItem[] = (activePeriods.data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    startsOn: row.starts_on,
+    endsOn: row.ends_on,
+  }));
 
   return {
     context,
     studentCount: students.count ?? 0,
     periodCount: periods.count ?? 0,
     reportCount: reports.count ?? 0,
+    recentReports: recent,
+    activePeriods: active,
   };
 }
 
