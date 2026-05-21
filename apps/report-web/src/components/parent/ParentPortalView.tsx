@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { formatPeriod, getScoreInsight } from "@/lib/report/format";
 import type { ReportData, StudentSummary } from "@/lib/report/types";
+import { HexRadar } from "@/components/scoring/HexRadar";
+import { coerceScores } from "@/lib/scoring/legacy";
+import { SCORING_DIMENSIONS, deriveDisplayScore } from "@/lib/scoring/priors";
 
 export function ParentPortalView({
   token,
@@ -19,6 +22,7 @@ export function ParentPortalView({
         <div className="rounded-3xl border border-[#e5ded2] bg-white p-5 shadow-sm">
           <p className="text-xs font-black text-blue-700">학부모 보고서함</p>
           <h1 className="mt-2 text-2xl font-black text-slate-950">{student.name} 보고서</h1>
+          {latestReport ? <StudentRadarCard report={latestReport} /> : null}
           <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
             <Meta label="학생 코드" value={student.studentCode || "등록 대기"} />
             <Meta label="학교/등록연도" value={`${student.schoolName} · ${student.enrollmentYear}`} />
@@ -67,6 +71,45 @@ export function ParentPortalView({
         </div>
       </section>
     </main>
+  );
+}
+
+function StudentRadarCard({ report }: { report: ReportData & { id: string } }) {
+  const scoresV2 = coerceScores(report.scores as unknown);
+  const display = Object.fromEntries(
+    SCORING_DIMENSIONS.map((dim) => {
+      const raw = scoresV2[dim];
+      return [dim, raw == null ? null : deriveDisplayScore(raw)];
+    }),
+  ) as Partial<Record<(typeof SCORING_DIMENSIONS)[number], number | null>>;
+  const presentValues = Object.values(display).filter(
+    (v): v is number => typeof v === "number",
+  );
+  const overall =
+    presentValues.length > 0
+      ? Math.round(presentValues.reduce((a, b) => a + b, 0) / presentValues.length)
+      : null;
+
+  return (
+    <div className="mt-4 grid items-center gap-3 rounded-2xl border border-[#e1dbcf] bg-[#fffdf8] p-3 sm:grid-cols-[200px_1fr]">
+      <div className="flex justify-center">
+        <HexRadar scores={display} size={200} ariaLabel="최근 보고서 영역별 점수" />
+      </div>
+      <div className="px-2">
+        <p className="text-xs font-black text-blue-700">최근 보고서</p>
+        <p className="mt-1 text-base font-black text-slate-950">{report.periodName}</p>
+        <p className="mt-1 text-xs font-bold text-slate-500">{formatPeriod(report)}</p>
+        {overall !== null ? (
+          <p className="mt-3 text-sm font-black text-slate-700">
+            종합 <span className="text-lg text-slate-950">{overall}</span>
+            <span className="ml-1 text-xs font-bold text-slate-500">/ 100</span>
+          </p>
+        ) : null}
+        <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
+          또래 대비가 아닌 이번 기간 관찰 기록입니다.
+        </p>
+      </div>
+    </div>
   );
 }
 

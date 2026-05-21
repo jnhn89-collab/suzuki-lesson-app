@@ -3,10 +3,15 @@ import {
   buildTeacherSummary,
   formatPeriod,
   getScoreInsight,
-  scorePercent,
 } from "@/lib/report/format";
-import { scoreCategories } from "@/lib/report/content";
 import type { ReportData } from "@/lib/report/types";
+import { HexRadar } from "@/components/scoring/HexRadar";
+import { coerceScores } from "@/lib/scoring/legacy";
+import {
+  DIMENSION_LABELS_KO,
+  SCORING_DIMENSIONS,
+  deriveDisplayScore,
+} from "@/lib/scoring/priors";
 
 type ReportDocumentProps = {
   report: ReportData;
@@ -87,29 +92,8 @@ export function ReportDocument({ report, audience = "teacher" }: ReportDocumentP
           <div className="space-y-5">
             {audience === "parent" ? <MetricStrip report={report} /> : null}
 
-            <section className="break-inside-avoid">
-              <h2 className="mb-2 text-base font-black">영역별 기록</h2>
-              <div className="space-y-2 rounded-2xl border border-[#e1dbcf] bg-white/70 p-4">
-                {scoreCategories.map((category) => {
-                  const score = report.scores[category.id];
-                  return (
-                    <div
-                      key={category.id}
-                      className="grid grid-cols-[56px_1fr_28px] items-center gap-3 text-sm font-extrabold text-slate-600"
-                    >
-                      <div>{category.label}</div>
-                      <div className="h-2 overflow-hidden rounded-full bg-[#e5ded2]">
-                        <div
-                          className="h-full rounded-full bg-[linear-gradient(90deg,#2457c5,#16845c)]"
-                          style={{ width: `${scorePercent(score)}%` }}
-                        />
-                      </div>
-                      <div className="text-right">{score}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+            <DimensionScores report={report} />
+
 
             <section className="break-inside-avoid">
               <h2 className="mb-2 text-base font-black">이번 기간 키워드</h2>
@@ -128,6 +112,50 @@ export function ReportDocument({ report, audience = "teacher" }: ReportDocumentP
         </div>
       </div>
     </article>
+  );
+}
+
+function DimensionScores({ report }: { report: ReportData }) {
+  const scoresV2 = coerceScores(report.scores as unknown);
+  const displayScores = Object.fromEntries(
+    SCORING_DIMENSIONS.map((dim) => {
+      const raw = scoresV2[dim];
+      return [dim, raw == null ? null : deriveDisplayScore(raw)];
+    }),
+  ) as Partial<Record<(typeof SCORING_DIMENSIONS)[number], number | null>>;
+
+  return (
+    <section className="break-inside-avoid">
+      <h2 className="mb-2 text-base font-black">영역별 기록</h2>
+      <div className="rounded-2xl border border-[#e1dbcf] bg-white/70 p-4">
+        <div className="flex justify-center">
+          <HexRadar scores={displayScores} size={200} />
+        </div>
+        <div className="mt-4 space-y-2">
+          {SCORING_DIMENSIONS.map((dim) => {
+            const raw = scoresV2[dim];
+            const display = displayScores[dim];
+            return (
+              <div
+                key={dim}
+                className="grid grid-cols-[64px_1fr_44px] items-center gap-3 text-sm font-extrabold text-slate-600"
+              >
+                <div>{DIMENSION_LABELS_KO[dim]}</div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#e5ded2]">
+                  {typeof display === "number" ? (
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,#2457c5,#16845c)]"
+                      style={{ width: `${display}%` }}
+                    />
+                  ) : null}
+                </div>
+                <div className="text-right">{raw == null ? "—" : raw.toFixed(1)}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
