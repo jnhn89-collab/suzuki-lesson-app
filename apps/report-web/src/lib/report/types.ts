@@ -1,12 +1,10 @@
-export type ScoreCategoryId =
-  | "posture"
-  | "intonation"
-  | "rhythm"
-  | "tone"
-  | "bow"
-  | "musicality";
+import type { ScoringDimension } from "@/lib/scoring/priors";
+import type { Scores } from "@/lib/scoring/types";
 
-export type ScoreMap = Record<ScoreCategoryId, number>;
+export type ScoreCategoryId =
+  ScoringDimension;
+
+export type ScoreMap = Scores;
 
 export type ReportStatus = "draft" | "published" | "archived" | "revoked";
 
@@ -43,6 +41,8 @@ export type StudentSummary = {
   ageGroup: string;
   currentPiece: string;
   status: "active" | "inactive";
+  suzukiBookLevel?: number | null;
+  showPeerComparison?: boolean;
 };
 
 export type AcademicPeriod = {

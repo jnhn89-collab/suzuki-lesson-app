@@ -3,8 +3,9 @@ import "server-only";
 import { cookies } from "next/headers";
 import { getDemoPortalData } from "@/lib/demo";
 import { hasParentSecurityEnv, hasSupabaseAdminEnv, requireEnv } from "@/lib/env";
-import { sampleReport, scoreCategories } from "@/lib/report/content";
+import { sampleReport } from "@/lib/report/content";
 import type { ParentAccessInput, ParentPortalSummary, ReportData, ScoreMap } from "@/lib/report/types";
+import { coerceScores } from "@/lib/scoring/legacy";
 import {
   createPublicToken,
   hashToken,
@@ -345,20 +346,10 @@ function mapReport(
 }
 
 function normalizeScores(value: unknown): ScoreMap {
-  const source = isRecord(value) ? value : {};
-  return Object.fromEntries(
-    scoreCategories.map((category) => {
-      const score = Number(source[category.id]);
-      return [category.id, Number.isFinite(score) ? Math.min(5, Math.max(1, score)) : 3];
-    }),
-  ) as ScoreMap;
+  return coerceScores(value);
 }
 
 function normalizeFocusTags(value: unknown) {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string").slice(0, 20);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

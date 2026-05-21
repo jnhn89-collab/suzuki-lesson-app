@@ -232,3 +232,51 @@ Architecture:
   - `7f8ccbb` Stream B orphan 시안
   - `3a01e21` D1 학부모 인증 발신자 맥락
 - `dev` push 완료. Vercel GitHub 연동 Preview는 push마다 자동 재배포 대상.
+
+### Stream B Entry — User Decisions
+
+- Legacy 6차원 → 5차원 backfill은 0005 적용과 동시에 진행.
+- Book level 입력은 학생 상세 페이지에서 한 번 설정.
+- Hex radar는 학부모 포털 카드와 보고서 상세 둘 다 표시.
+- 0005 DB push는 지금 진행하기로 결정.
+
+### Claude Turn 11/12
+
+- `eb2f0f1`: `0006_scoring_dimension_backfill.sql` 추가.
+  - legacy `posture` + `bow` 평균을 `technique`으로 변환.
+  - `intonation`, `rhythm`, `tone`, `musicality`는 기존 값을 유지.
+  - legacy key가 없으면 재실행 영향이 없는 멱등 backfill.
+- `294f826`: scoring v2 타입/legacy mapper/schema 추가.
+  - `lib/scoring/types.ts`: v2 `Scores`, nullable `ScoreValue`, legacy type.
+  - `lib/scoring/legacy.ts`: `legacyToScores`, `coerceScores`.
+  - `lib/report/schema.ts`: `scoreV2Schema` 추가.
+- `419f4ac`: 학부모/보고서 화면 Stream B wiring.
+  - `ReportDocument`: HexRadar + 5차원 bar.
+  - `ParentPortalView`: 최신 보고서 StudentRadarCard.
+  - legacy/v2 모두 `coerceScores`로 호환.
+
+### Codex Turn 11 — Teacher Input, Settings, DB Status
+
+- `ReportEditor` 점수 패널을 `ScoreSliderRow` 기반 5차원 0.5 단위 입력으로 전환.
+- `musicality`는 N/A 허용.
+- `reportStoreSchema`의 `scores`를 v2 schema로 전환.
+- `/teacher/reports` POST에서 `coerceScores`를 먼저 적용해 legacy/v2 payload 모두 저장 가능하게 처리.
+- `ReportData.scores`, sample content, score helper, portal normalize를 v2 nullable scores에 맞춤.
+- `/teacher/students/[studentId]` 학생 상세 페이지 추가.
+  - `suzuki_book_level` 설정.
+  - `show_peer_comparison` 토글.
+  - 학생 목록에서 상세 설정 링크 추가.
+- DB push dry-run 결과:
+  - 적용 대상은 `0005_scoring_v2.sql`, `0006_scoring_dimension_backfill.sql` 두 개만 확인.
+- 실제 DB push는 `SUPABASE_DB_PASSWORD` 누락으로 blocked.
+  - Supabase CLI temp login role 인증 실패 및 pooler circuit breaker 발생.
+  - `SUPABASE_DB_PASSWORD` 설정 후 재시도 필요.
+- `0004` NULL row verification도 현재 로컬 secret 값이 비어 있어 blocked.
+
+### Codex Turn 11 검증
+
+- `git diff --check`: PASS
+- `npm run lint -- --no-cache`: PASS
+- `npm run typecheck -- --incremental false`: PASS
+- `npm run quality`: PASS
+- `npm run build`: PASS

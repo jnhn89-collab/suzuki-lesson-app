@@ -22,6 +22,11 @@ export type ActivePeriodItem = {
   endsOn: string;
 };
 
+export type TeacherStudentDetailData = {
+  context: Awaited<ReturnType<typeof getTeacherContext>>;
+  student: StudentSummary | null;
+};
+
 export async function getTeacherHomeData() {
   const context = await getTeacherContext();
   if (context.status !== "ready") {
@@ -122,6 +127,32 @@ export async function getTeacherStudentsPageData() {
       currentPiece: student.current_piece,
       status: student.status === "inactive" ? "inactive" : "active",
     })),
+  };
+}
+
+export async function getTeacherStudentDetailData(studentId: string): Promise<TeacherStudentDetailData> {
+  const context = await getTeacherContext();
+  if (context.status !== "ready") {
+    return {
+      context,
+      student: studentId === sampleStudent.id ? sampleStudent : null,
+    };
+  }
+
+  const { data, error } = await context.supabase
+    .from("students")
+    .select("*")
+    .eq("id", studentId)
+    .eq("teacher_id", context.user.id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Student detail load failed: ${error.message}`);
+  }
+
+  return {
+    context,
+    student: data ? mapStudentSummary(data) : null,
   };
 }
 
@@ -229,6 +260,36 @@ function getDemoPeriods(): AcademicPeriod[] {
       status: "active",
     },
   ];
+}
+
+function mapStudentSummary(student: {
+  id: string;
+  student_code?: string | null;
+  name: string;
+  school_name?: string | null;
+  enrollment_year?: number | null;
+  registration_year?: number | null;
+  registration_sequence?: number | null;
+  age_group: string;
+  current_piece: string;
+  status: string;
+  suzuki_book_level?: number | null;
+  show_peer_comparison?: boolean | null;
+}): StudentSummary {
+  return {
+    id: student.id,
+    studentCode: student.student_code ?? "",
+    name: student.name,
+    schoolName: student.school_name ?? "",
+    enrollmentYear: student.enrollment_year ?? new Date().getFullYear(),
+    registrationYear: student.registration_year ?? new Date().getFullYear(),
+    registrationSequence: student.registration_sequence ?? 0,
+    ageGroup: student.age_group,
+    currentPiece: student.current_piece,
+    status: student.status === "inactive" ? "inactive" : "active",
+    suzukiBookLevel: student.suzuki_book_level ?? null,
+    showPeerComparison: Boolean(student.show_peer_comparison),
+  };
 }
 
 function mapPeriod(period: {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { hasParentSecurityEnv, requireEnv } from "@/lib/env";
 import {
   academicPeriodSchema,
@@ -10,6 +11,12 @@ import {
 } from "@/lib/report/schema";
 import { hmacIdentifier } from "@/lib/security";
 import { requireTeacherContext } from "./session";
+
+const studentScoringSettingsSchema = z.object({
+  studentId: z.string().uuid(),
+  suzukiBookLevel: z.number().int().min(1).max(10).nullable(),
+  showPeerComparison: z.boolean(),
+});
 
 export async function createStudentAction(formData: FormData) {
   const context = await requireTeacherContext();
@@ -118,6 +125,38 @@ export async function createAcademicPeriodAction(formData: FormData) {
   revalidatePath("/teacher/periods");
   revalidatePath("/teacher/reports/new");
   redirect("/teacher/periods?created=1");
+}
+
+export async function updateStudentScoringSettingsAction(formData: FormData) {
+  const context = await requireTeacherContext();
+  const parsed = studentScoringSettingsSchema.safeParse({
+    studentId: formData.get("studentId"),
+    suzukiBookLevel: optionalNumber(formData.get("suzukiBookLevel")) ?? null,
+    showPeerComparison: formData.get("showPeerComparison") === "on",
+  });
+
+  if (!parsed.success) {
+    redirect("/teacher/students?error=scoring-input");
+  }
+
+  const { studentId, suzukiBookLevel, showPeerComparison } = parsed.data;
+  const { error } = await context.supabase
+    .from("students")
+    .update({
+      suzuki_book_level: suzukiBookLevel,
+      show_peer_comparison: showPeerComparison,
+    })
+    .eq("id", studentId)
+    .eq("teacher_id", context.user.id);
+
+  if (error) {
+    redirect(`/teacher/students/${studentId}?error=scoring-db`);
+  }
+
+  revalidatePath("/teacher/students");
+  revalidatePath(`/teacher/students/${studentId}`);
+  revalidatePath("/teacher/reports/new");
+  redirect(`/teacher/students/${studentId}?updated=1`);
 }
 
 async function getNextRegistrationSequence(

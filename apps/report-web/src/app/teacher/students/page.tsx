@@ -153,6 +153,12 @@ function StudentCard({ student }: { student: StudentSummary }) {
           <p className="text-xs font-black text-blue-700">{student.studentCode || sampleStudent.studentCode}</p>
           <h3 className="mt-1 text-xl font-black text-slate-950">{student.name}</h3>
           <p className="mt-2 text-sm font-bold text-slate-600">{student.currentPiece || "진도 미입력"}</p>
+          <Link
+            href={`/teacher/students/${student.id}`}
+            className="mt-3 inline-flex rounded-xl border border-slate-200 px-3 py-2 text-xs font-black text-slate-700 hover:border-blue-200 hover:text-blue-700"
+          >
+            학생 상세·점수 설정
+          </Link>
         </div>
         <div className="grid gap-2 text-sm sm:min-w-56">
           <Meta label="학교" value={student.schoolName || "미입력"} />

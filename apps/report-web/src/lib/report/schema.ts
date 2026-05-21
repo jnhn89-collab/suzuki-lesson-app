@@ -34,7 +34,7 @@ export const reportDraftSchema = z
     teacherName: z.string().trim().min(1).max(80),
     ageGroup: z.string().trim().max(20),
     currentPiece: z.string().trim().min(1).max(160),
-    scores: scoreSchema,
+    scores: scoreV2Schema,
     focusTags: z.array(z.string().trim().min(1).max(40)).max(20),
     strengths: z.string().trim().max(3000),
     growthArea: z.string().trim().max(3000),

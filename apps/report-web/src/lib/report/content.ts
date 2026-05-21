@@ -1,13 +1,10 @@
+import { DIMENSION_LABELS_KO, SCORING_DIMENSIONS } from "@/lib/scoring/priors";
 import type { ReportData, ScoreCategoryId } from "./types";
 
-export const scoreCategories: Array<{ id: ScoreCategoryId; label: string }> = [
-  { id: "posture", label: "자세" },
-  { id: "intonation", label: "음정" },
-  { id: "rhythm", label: "리듬" },
-  { id: "tone", label: "톤" },
-  { id: "bow", label: "활" },
-  { id: "musicality", label: "음악성" },
-];
+export const scoreCategories: Array<{ id: ScoreCategoryId; label: string }> = SCORING_DIMENSIONS.map((id) => ({
+  id,
+  label: DIMENSION_LABELS_KO[id],
+}));
 
 export const focusOptions = [
   "활 접촉점",
@@ -103,12 +100,11 @@ export const sampleReport: ReportData = {
   ageGroup: "8-10",
   currentPiece: "Book 1 · Minuet 1",
   scores: {
-    posture: 4,
     intonation: 3,
     rhythm: 4,
     tone: 4,
-    bow: 3,
     musicality: 4,
+    technique: 3.5,
   },
   focusTags: ["활 접촉점", "음정 안정", "프레이징"],
   strengths:
@@ -149,12 +145,11 @@ export const sampleReports = [
     completedPieces: 1,
     currentPiece: "Book 1 · Allegretto",
     scores: {
-      posture: 3,
       intonation: 3,
       rhythm: 4,
       tone: 3,
-      bow: 3,
       musicality: 3,
+      technique: 3,
     },
     focusTags: ["리듬 유지", "왼손 모양", "느린 템포"],
     strengths:

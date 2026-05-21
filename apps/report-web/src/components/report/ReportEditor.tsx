@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { focusOptions, presetGroups, sampleReport, scoreCategories } from "@/lib/report/content";
+import { ScoreSliderRow } from "@/components/scoring/ScoreSliderRow";
+import { SCORING_DIMENSIONS, type ScoringDimension } from "@/lib/scoring/priors";
+import { coerceScores } from "@/lib/scoring/legacy";
+import { focusOptions, presetGroups, sampleReport } from "@/lib/report/content";
 import type {
   ReportData,
-  ScoreCategoryId,
   TeacherPeriodOption,
   TeacherStudentOption,
 } from "@/lib/report/types";
@@ -93,7 +95,7 @@ export function ReportEditor({
     setReport((current) => ({ ...current, [key]: value }));
   }
 
-  function updateScore(category: ScoreCategoryId, value: number) {
+  function updateScore(category: ScoringDimension, value: number | null) {
     setReport((current) => ({
       ...current,
       scores: { ...current.scores, [category]: value },
@@ -365,27 +367,14 @@ export function ReportEditor({
 
           <Panel title="영역별 점수">
             <div className="space-y-3">
-              {scoreCategories.map((category) => (
-                <div key={category.id} className="grid grid-cols-[54px_1fr_24px] items-center gap-2">
-                  <div className="text-sm font-black text-slate-700">{category.label}</div>
-                  <div className="grid grid-cols-5 gap-1">
-                    {[1, 2, 3, 4, 5].map((score) => (
-                      <button
-                        key={score}
-                        type="button"
-                        onClick={() => updateScore(category.id, score)}
-                        className={`rounded-lg border py-2 text-sm font-black ${
-                          report.scores[category.id] === score
-                            ? "border-slate-950 bg-slate-950 text-white"
-                            : "border-slate-200 bg-white text-slate-500"
-                        }`}
-                      >
-                        {score}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="text-right text-sm font-black">{report.scores[category.id]}</div>
-                </div>
+              {SCORING_DIMENSIONS.map((dimension) => (
+                <ScoreSliderRow
+                  key={dimension}
+                  dimension={dimension}
+                  value={coerceScores(report.scores)[dimension]}
+                  onChange={(value) => updateScore(dimension, value)}
+                  allowNa={dimension === "musicality"}
+                />
               ))}
             </div>
           </Panel>

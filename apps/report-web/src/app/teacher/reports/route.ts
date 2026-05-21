@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { hasParentSecurityEnv, hasSupabaseAdminEnv, hasSupabaseEnv } from "@/lib/env";
 import { reportStoreSchema } from "@/lib/report/schema";
+import { coerceScores } from "@/lib/scoring/legacy";
 import { createPortalLinkToken, hashPassword, hashToken } from "@/lib/security";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureTeacherProfile } from "@/lib/teacher/session";
@@ -20,7 +21,9 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = reportStoreSchema.safeParse(body);
+  const parsed = reportStoreSchema.safeParse(
+    body && typeof body === "object" ? { ...body, scores: coerceScores(body?.scores) } : body,
+  );
   const resetPortalPin = Boolean(body?.resetPortalPin);
 
   if (!parsed.success) {
