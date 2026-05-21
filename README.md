@@ -44,9 +44,12 @@ npm run dev
 주요 경로:
 
 ```text
+/teacher/login
+/teacher/students
+/teacher/periods
 /teacher/reports/new
-/r/demo-token
-/r/demo-token/view
+/p/demo-portal
+/p/demo-portal/reports
 ```
 
 데모 학부모 인증값:
@@ -56,6 +59,12 @@ npm run dev
 휴대폰 뒷자리: 1234
 PIN: 1234
 ```
+
+운영 공유 모델:
+
+- 선생님은 학생과 기간을 등록한 뒤 보고서를 학부모 보고서함에 발행합니다.
+- 학부모는 `/p/:token` 링크에서 생년월일 6자리, 휴대폰 뒷자리 4자리, 보고서함 PIN으로 인증합니다.
+- 같은 학생의 여러 학기/분기 보고서는 하나의 보고서함에 최신순으로 누적됩니다.
 
 ## 주의
 

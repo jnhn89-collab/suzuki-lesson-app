@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 const SCRYPT_KEY_LENGTH = 64;
+const PORTAL_LINK_TOKEN_PREFIX = "pl_";
 
 export function createPublicToken() {
   return randomBytes(32).toString("base64url");
@@ -10,8 +11,19 @@ export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("base64url");
 }
 
+export function createPortalLinkToken() {
+  return `${PORTAL_LINK_TOKEN_PREFIX}${createPublicToken()}`;
+}
+
 export function hmacIdentifier(value: string, pepper: string) {
   return createHmac("sha256", pepper).update(value).digest("base64url");
+}
+
+export function safeEqualString(left: string, right: string) {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 export function hashPassword(secret: string) {
@@ -28,4 +40,3 @@ export function verifyPassword(secret: string, stored: string) {
   if (expected.length !== actual.length) return false;
   return timingSafeEqual(expected, actual);
 }
-

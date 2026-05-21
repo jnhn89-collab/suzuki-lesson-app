@@ -17,16 +17,21 @@ export function formatPeriod(report: Pick<ReportData, "periodStart" | "periodEnd
 }
 
 export function getAverageScore(scores: ReportData["scores"]) {
-  const values = scoreCategories.map((category) => scores[category.id] ?? 0);
+  const values = scoreCategories
+    .map((category) => scores[category.id])
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  if (values.length === 0) return 0;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 export function getScoreInsight(scores: ReportData["scores"]) {
-  const top = scoreCategories.reduce((best, category) =>
-    scores[category.id] > scores[best.id] ? category : best,
+  const scored = scoreCategories.filter((category) => typeof scores[category.id] === "number");
+  const categories = scored.length > 0 ? scored : scoreCategories;
+  const top = categories.reduce((best, category) =>
+    Number(scores[category.id] ?? 0) > Number(scores[best.id] ?? 0) ? category : best,
   );
-  const growth = scoreCategories.reduce((weakest, category) =>
-    scores[category.id] < scores[weakest.id] ? category : weakest,
+  const growth = categories.reduce((weakest, category) =>
+    Number(scores[category.id] ?? 0) < Number(scores[weakest.id] ?? 0) ? category : weakest,
   );
 
   return {
@@ -36,7 +41,8 @@ export function getScoreInsight(scores: ReportData["scores"]) {
   };
 }
 
-export function scorePercent(score: number) {
+export function scorePercent(score: number | null) {
+  if (score === null) return 0;
   return Math.max(0, Math.min(100, (score / 5) * 100));
 }
 

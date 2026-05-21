@@ -1,13 +1,10 @@
+import { DIMENSION_LABELS_KO, SCORING_DIMENSIONS } from "@/lib/scoring/priors";
 import type { ReportData, ScoreCategoryId } from "./types";
 
-export const scoreCategories: Array<{ id: ScoreCategoryId; label: string }> = [
-  { id: "posture", label: "자세" },
-  { id: "intonation", label: "음정" },
-  { id: "rhythm", label: "리듬" },
-  { id: "tone", label: "톤" },
-  { id: "bow", label: "활" },
-  { id: "musicality", label: "음악성" },
-];
+export const scoreCategories: Array<{ id: ScoreCategoryId; label: string }> = SCORING_DIMENSIONS.map((id) => ({
+  id,
+  label: DIMENSION_LABELS_KO[id],
+}));
 
 export const focusOptions = [
   "활 접촉점",
@@ -103,12 +100,11 @@ export const sampleReport: ReportData = {
   ageGroup: "8-10",
   currentPiece: "Book 1 · Minuet 1",
   scores: {
-    posture: 4,
     intonation: 3,
     rhythm: 4,
     tone: 4,
-    bow: 3,
     musicality: 4,
+    technique: 3.5,
   },
   focusTags: ["활 접촉점", "음정 안정", "프레이징"],
   strengths:
@@ -124,3 +120,48 @@ export const sampleReport: ReportData = {
   status: "draft",
 };
 
+export const sampleStudent = {
+  id: "demo-student",
+  studentCode: "2026-HANBIT-001",
+  name: "김지우",
+  schoolName: "한빛초등학교",
+  enrollmentYear: 2026,
+  registrationYear: 2026,
+  registrationSequence: 1,
+  ageGroup: "8-10",
+  currentPiece: "Book 1 · Minuet 1",
+  status: "active" as const,
+};
+
+export const sampleReports = [
+  { ...sampleReport, id: "demo-report-2026-spring", status: "published" as const },
+  {
+    ...sampleReport,
+    id: "demo-report-2025-winter",
+    periodName: "2025 겨울학기",
+    periodStart: "2025-12-01",
+    periodEnd: "2026-02-28",
+    totalLessons: 8,
+    completedPieces: 1,
+    currentPiece: "Book 1 · Allegretto",
+    scores: {
+      intonation: 3,
+      rhythm: 4,
+      tone: 3,
+      musicality: 3,
+      technique: 3,
+    },
+    focusTags: ["리듬 유지", "왼손 모양", "느린 템포"],
+    strengths:
+      "리듬을 말로 먼저 확인하고 연주하는 습관이 생겼습니다.\n익숙한 구간에서는 박자 흐름이 안정적으로 이어졌습니다.",
+    growthArea:
+      "새 구간에서는 왼손 모양이 급하게 무너지는 경우가 있습니다. 느린 속도에서 손가락을 현 가까이에 두는 연습을 이어가겠습니다.",
+    homeSupport:
+      "처음부터 끝까지 연결하기보다 새로 배운 두 마디를 천천히 반복하도록 도와주세요.",
+    practicePlan:
+      "새 구간 두 마디를 느린 속도로 세 번 반복한 뒤, 앞뒤 마디와 연결합니다.",
+    dailyMinutes: 15,
+    dailyReps: 4,
+    status: "published" as const,
+  },
+];
