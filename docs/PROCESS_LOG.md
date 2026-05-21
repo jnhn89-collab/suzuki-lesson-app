@@ -180,3 +180,16 @@ Architecture:
 - Vercel/Supabase CLI는 추가 사용하지 않음.
 - `dev` 브랜치 push 후 GitHub 연동된 Vercel Preview가 자동 배포하는 방식으로 진행.
 - `0005`는 아직 운영 DB에 push하지 않음. 현재 런타임은 0005 컬럼을 사용하지 않으므로 Preview 동작에는 영향 없음.
+
+### Codex Turn 9 — D3 PDF 파일명
+
+- `PrintButton`에 `fileName` prop 추가.
+- 선생님 미리보기와 학부모 보고서 상세의 PDF 저장 흐름에서 출력 직전 document title을 `{학생명}_{기간명}_보고서`로 바꾸고 출력 후 원래 title로 복구.
+- 브라우저의 "PDF로 저장" 기본 파일명이 더 알아보기 쉬운 한글 파일명으로 제안되도록 개선.
+
+### Codex Turn 9 검증
+
+- `npm run lint -- --no-cache`: PASS
+- `npm run typecheck -- --incremental false`: PASS
+- `npm run quality`: PASS
+- `npm run build`: PASS

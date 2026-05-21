@@ -23,7 +23,7 @@ export default async function ParentPortalReportDetailPage({
         <Link href={`/p/${token}/reports`} className="text-sm font-black text-blue-700">
           ← 보고서 목록
         </Link>
-        <PrintButton label="PDF 저장" />
+        <PrintButton label="PDF 저장" fileName={`${report.studentName}_${report.periodName}_보고서`} />
       </div>
       <ReportDocument report={report} audience="parent" />
     </main>

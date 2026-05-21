@@ -484,7 +484,10 @@ export function ReportEditor({
             >
               학부모 보고서함 데모 열기
             </a>
-            <PrintButton label="미리보기 PDF 저장" />
+            <PrintButton
+              label="미리보기 PDF 저장"
+              fileName={`${report.studentName}_${report.periodName}_보고서`}
+            />
             {publishResult ? (
               <p className="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
                 발행 완료. 학부모 전달 카드가 화면에 떠 있습니다.
