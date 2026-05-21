@@ -280,3 +280,30 @@ Architecture:
 - `npm run typecheck -- --incremental false`: PASS
 - `npm run quality`: PASS
 - `npm run build`: PASS
+
+### Claude Turn 14 — Stream B Cross-Review
+
+- `eb49692` pull 후 통합 `build/lint/typecheck` PASS.
+- 6렌즈 리뷰 결과:
+  - L1 학생 없음 `notFound()` 분기 OK.
+  - L2 form prefill OK.
+  - L3 teacher ownership + action zod UUID validation OK.
+  - L4 모바일 시각 QA는 dev 환경에서 추가 확인 필요.
+  - L5 malformed UUID URL이 Supabase error를 통해 500으로 갈 수 있는 edge case 확인.
+  - L6 학생별 설정 copy는 반복 입력 부담을 늘리지 않음.
+
+### Codex Turn 12 — Student Detail URL Guard
+
+- `getTeacherStudentDetailData`에 UUID 사전 검증 추가.
+- malformed `/teacher/students/[studentId]` URL은 Supabase query 전에 `student: null`로 반환되어 기존 `notFound()` 경로로 처리.
+- `supabase db push --linked --dry-run` 재확인:
+  - pending: `0005_scoring_v2.sql`
+  - pending: `0006_scoring_dimension_backfill.sql`
+- 실제 DB push와 `0004` NULL row verification은 여전히 `SUPABASE_DB_PASSWORD` 및 실 Supabase secret 부재로 blocked.
+
+### Codex Turn 12 검증
+
+- `npm run typecheck -- --incremental false`: PASS
+- `npm run lint -- --no-cache`: PASS
+- `npm run quality`: PASS
+- `npm run build`: PASS

@@ -27,6 +27,8 @@ export type TeacherStudentDetailData = {
   student: StudentSummary | null;
 };
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function getTeacherHomeData() {
   const context = await getTeacherContext();
   if (context.status !== "ready") {
@@ -136,6 +138,13 @@ export async function getTeacherStudentDetailData(studentId: string): Promise<Te
     return {
       context,
       student: studentId === sampleStudent.id ? sampleStudent : null,
+    };
+  }
+
+  if (!uuidPattern.test(studentId)) {
+    return {
+      context,
+      student: null,
     };
   }
 
