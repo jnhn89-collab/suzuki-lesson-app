@@ -209,3 +209,26 @@ Architecture:
 - `npm run typecheck -- --incremental false`: PASS
 - `npm run quality`: PASS
 - `npm run build`: PASS
+
+### Claude Turn 9 — Stream B 시안 트랙
+
+- Codex가 D1을 진행 중인 동안 Claude는 충돌 회피를 위해 Stream B orphan 시안만 작업.
+- `apps/report-web/src/components/scoring/HexRadar.tsx`
+  - 5축 SVG radar, 4-ring grid, gradient fill.
+  - 점수 미입력/N/A vertex 생략.
+  - `aria-label` 지원.
+- `apps/report-web/src/components/scoring/ScoreSliderRow.tsx`
+  - 1-5점 0.5 단위 9-point 입력 버튼.
+  - whole/half score 시각 차등, `aria-pressed`, optional N/A 버튼.
+- `docs/STREAM_B_SKETCH.md`
+  - schema/types/wire 순서, 결정 대기 항목, 리스크, 본 PR 진입 조건 정리.
+- 두 컴포넌트는 routed page import 0인 orphan 상태. `0005` DB push와 schema/types 동시 변경 전까지 활성화하지 않음.
+- Claude 검증: lint/typecheck/build PASS.
+
+### Turn 9 통합 상태
+
+- 최종 커밋 순서:
+  - `672f854` A1 대시보드 TodayCard
+  - `7f8ccbb` Stream B orphan 시안
+  - `3a01e21` D1 학부모 인증 발신자 맥락
+- `dev` push 완료. Vercel GitHub 연동 Preview는 push마다 자동 재배포 대상.
