@@ -193,3 +193,19 @@ Architecture:
 - `npm run typecheck -- --incremental false`: PASS
 - `npm run quality`: PASS
 - `npm run build`: PASS
+
+### Codex Turn 9 — D1 학부모 인증 발신자 맥락 + 모바일 QA
+
+- `/p/[token]` 보호자 확인 페이지에 "보낸 곳" 카드 추가.
+- 실제 토큰은 service-role로 유효한 portal link를 확인한 뒤 teacher profile의 선생님/스튜디오명과 링크 발송일만 표시.
+- 인증 전에는 학생명, 생년월일, 전화 단서, 보고서 내용은 표시하지 않음.
+- 데모 토큰은 샘플 선생님/스튜디오 맥락과 데모 안내 표시.
+- Chrome CDP actual mobile viewport 390x844에서 `/teacher`, `/teacher/reports/new`, `/teacher/students`, `/p/demo-portal`, `/p/demo-portal/reports`, `/p/demo-portal/reports/demo-report-2026-spring` 모두 `scrollWidth=390` 확인.
+- PDF button title swap 검증: 출력 순간 `김지우_이번_학기_보고서`, 출력 후 원래 title 복구.
+
+### Codex Turn 9 추가 검증
+
+- `npm run lint -- --no-cache`: PASS
+- `npm run typecheck -- --incremental false`: PASS
+- `npm run quality`: PASS
+- `npm run build`: PASS

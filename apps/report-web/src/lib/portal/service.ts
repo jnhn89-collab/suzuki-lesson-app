@@ -3,7 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { getDemoPortalData } from "@/lib/demo";
 import { hasParentSecurityEnv, hasSupabaseAdminEnv, requireEnv } from "@/lib/env";
-import { scoreCategories } from "@/lib/report/content";
+import { sampleReport, scoreCategories } from "@/lib/report/content";
 import type { ParentAccessInput, ParentPortalSummary, ReportData, ScoreMap } from "@/lib/report/types";
 import {
   createPublicToken,
@@ -15,6 +15,49 @@ import {
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const PORTAL_SESSION_COOKIE = "parent_portal_session";
+
+export type ParentPortalAccessContext = {
+  teacherName: string;
+  studioName: string;
+  issuedAt: string | null;
+  isDemo?: boolean;
+};
+
+export async function getParentPortalAccessContext(
+  token: string,
+): Promise<ParentPortalAccessContext | null> {
+  if (token === "demo-portal") {
+    return {
+      teacherName: sampleReport.teacherName,
+      studioName: "스즈키 바이올린",
+      issuedAt: null,
+      isDemo: true,
+    };
+  }
+
+  if (!hasSupabaseAdminEnv()) return null;
+
+  const supabase = createSupabaseAdminClient();
+  const link = await loadPortalLinkForToken(
+    supabase,
+    token,
+    "id,teacher_id,created_at,expires_at,revoked_at",
+  );
+
+  if (!link || isRevokedOrExpired(link)) return null;
+
+  const { data: teacher } = await supabase
+    .from("teacher_profiles")
+    .select("name,studio_name")
+    .eq("id", link.teacher_id)
+    .maybeSingle();
+
+  return {
+    teacherName: teacher?.name?.trim() || "담당 선생님",
+    studioName: teacher?.studio_name?.trim() || "",
+    issuedAt: link.created_at ?? null,
+  };
+}
 
 export async function getParentPortalSummary(token: string): Promise<ParentPortalSummary | null> {
   const cookieStore = await cookies();
