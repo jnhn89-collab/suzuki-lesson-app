@@ -16,6 +16,7 @@ export async function createStudentAction(formData: FormData) {
   if (!hasParentSecurityEnv()) {
     redirect("/teacher/students?error=missing-pepper");
   }
+  const currentYear = new Date().getFullYear();
 
   const parsed = studentCreateSchema.safeParse({
     name: formData.get("name"),
@@ -24,9 +25,9 @@ export async function createStudentAction(formData: FormData) {
     parentPhoneLast4: formData.get("parentPhoneLast4"),
     currentPiece: formData.get("currentPiece") ?? "",
     ageGroup: formData.get("ageGroup") ?? "",
-    schoolName: formData.get("schoolName"),
-    enrollmentYear: Number(formData.get("enrollmentYear")),
-    registrationYear: Number(formData.get("registrationYear")),
+    schoolName: formData.get("schoolName") ?? "",
+    enrollmentYear: optionalNumber(formData.get("enrollmentYear")) ?? currentYear,
+    registrationYear: optionalNumber(formData.get("registrationYear")) ?? currentYear,
     registrationSequence: optionalNumber(formData.get("registrationSequence")),
   });
 

@@ -74,3 +74,62 @@ Gate:
 - Supabase SQL editor 또는 CLI에서 migration 적용 상태를 확인한다.
 - Vercel Preview/Production env에 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PARENT_ACCESS_PEPPER`가 모두 있는지 확인한다.
 - Dev 2 전에 실제 선생님 문장 20-30개, 익명 학부모 질문 10개를 제공하면 프리셋 품질이 크게 올라간다.
+
+## Stream 모델 (Ultraplan 후 재구조화, 2026-05-21)
+
+기존 Dev 1/2/3 cycle은 일정 기반이었음. Ultraplan 결정으로 stream 모델로 재구조화 — 6렌즈 자가 점검과 사용자 명시 요구를 기준으로 5개 stream을 병렬 또는 순차로 진행.
+
+### Stream A — First-impression & data lineage (사용자 가장 강조)
+
+- A1: `/teacher` 대시보드를 숫자 카운트 → "오늘 할 일 카드"로 교체
+- A2: ReportEditor에서 학생 선택 후 "학생 이름" 텍스트 필드 제거 → read-only 카드
+- A3: 기간 선택 후 시작/종료/기간명 필드 제거 → read-only, "직접 입력" 토글 분기
+- A4: 학생 등록 폼에서 학교명/입학년도/등록순서 선택 입력 강등, registrationSequence 100% 자동
+- A5: 학생 등록을 모바일에서 step 3개로 쪼개기 (선택)
+- A6: 빈 students/periods 시 ReportEditor 차단 + onboarding 카드
+
+### Stream B — Report writing 마찰 줄이기
+
+- B1: 점수 패널 default-collapse
+- B2: 점수 차원 6 → 5로 압축 (음정/박자/음색/음악성/자세활) — 0005 마이그레이션
+- B3: 점수 버튼 터치 영역 44×44px 보장 + 0.5 단위 입력
+- B4: 프리셋 카테고리 4개로 정리
+- B5: textarea 자동 저장 (debounce 800ms localStorage)
+- B6: 보고서 DB draft 분기 (`intent: "draft"|"publish"`)
+
+### Stream C — Publish/link/PIN 신뢰성
+
+- C1: 발행 결과를 modal로 승격, 명시 dismiss만 닫음
+- C2: 카톡 공유/SMS/클립보드 3-버튼 (Web Share API + fallback)
+- C3: reset 라벨 정직성 ("기존 학부모에게 전달한 링크와 PIN은 즉시 무효화됩니다")
+- C4: 학생 상세 페이지 `/teacher/students/[id]` — 보고서 history + token rotate/pin rotate 분리
+- C5: 카톡 발송 템플릿 자동 생성 (선생님 이름·학생 이름·기간·링크·PIN·인증 안내 한 줄)
+
+### Stream D — 학부모 모바일 경험 폴리시
+
+- D1: 학부모 인증 페이지 상단에 선생님 이름·스튜디오명·발송일 노출
+- D2: 인증 후 "홈 화면에 추가" PWA 안내
+- D3: PDF 파일명 `[학생이름]_[기간명]_보고서.pdf`
+- D4: 점수 마이크로 카피 "또래 대비가 아닌 이번 기간 관찰 결과" + 학생별 또래 대비 on/off
+- D5: 한 학생 보고서 2건+ 시 "기간 비교" 1줄
+- D6: 다음 보고서 발행 시 알림 (이메일 또는 Web Push)
+
+### Stream E — 운영/신뢰
+
+- E1: 학생/보고서 CSV/JSON 내보내기
+- E2: 발행 후 수정 정책 명시 (학부모가 보는 본은 즉시 갱신)
+- E3: 비밀번호 재설정 / OTP 로그인
+- E4: Playwright e2e 1건 (보고서 1건 = 1 PR 시나리오)
+
+### 우선순위
+
+- **P0**: A2, A3, A4, A6, C1, C2, C3 — 사용자 명시 + turn 4 회귀 사후
+- **P1**: A1, B1, B5, C4, C5, D1, D3
+- **P2**: A5, B2~B4, B6, D2, D4~D6
+- **P3**: E1~E4
+
+### Stream 분담 (Claude/Codex)
+
+- **Codex**: A2~A6, C1~C3 코드 변경
+- **Claude**: 점수 시스템 (B2 schema 0005, priors.ts, deep research), Reference apps 비교, PR critique
+- 매 PR마다 docs/PR_CHECKLIST.md 6렌즈 통과 메모 필수

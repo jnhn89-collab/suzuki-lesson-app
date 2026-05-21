@@ -52,6 +52,9 @@ export default async function TeacherStudentsPage({
         <div className="mt-6 grid gap-4 lg:grid-cols-[380px_1fr]">
           <form action={createStudentAction} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-black text-slate-950">새 학생 등록</h2>
+            <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
+              필수 6개 + 선택 사항. 학교/등록연도/등록순번은 비워두면 자동 처리됩니다.
+            </p>
             <div className="mt-4 grid gap-3">
               <Field label="학생 이름" name="name" placeholder="예: 김지우" disabled={!canWrite} />
               <Field label="생년월일" name="birthDate" type="date" disabled={!canWrite} />
@@ -64,36 +67,7 @@ export default async function TeacherStudentsPage({
                 placeholder="1234"
                 disabled={!canWrite}
               />
-              <Field
-                label="학교명"
-                name="schoolName"
-                placeholder={registrationExample.schoolName}
-                disabled={!canWrite}
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field
-                  label="입학/소속 연도"
-                  name="enrollmentYear"
-                  type="number"
-                  defaultValue={String(currentYear)}
-                  disabled={!canWrite}
-                />
-                <Field
-                  label="등록연도"
-                  name="registrationYear"
-                  type="number"
-                  defaultValue={String(currentYear)}
-                  disabled={!canWrite}
-                />
-              </div>
-              <Field
-                label="등록순번"
-                name="registrationSequence"
-                type="number"
-                placeholder="비워두면 자동"
-                disabled={!canWrite}
-              />
-              <Field label="나이대" name="ageGroup" placeholder="예: 8-10" disabled={!canWrite} />
+              <Field label="나이대 (선택)" name="ageGroup" placeholder="예: 8-10" disabled={!canWrite} />
               <Field
                 label="현재 진도"
                 name="currentPiece"
@@ -101,16 +75,53 @@ export default async function TeacherStudentsPage({
                 disabled={!canWrite}
               />
             </div>
+
+            <details className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs">
+              <summary className="cursor-pointer font-black text-slate-700">
+                학교·등록 정보 (선택)
+              </summary>
+              <div className="mt-3 grid gap-3">
+                <Field
+                  label="학교명 (비우면 STUDIO 코드)"
+                  name="schoolName"
+                  placeholder={registrationExample.schoolName}
+                  disabled={!canWrite}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label="입학/소속 연도"
+                    name="enrollmentYear"
+                    type="number"
+                    defaultValue={String(currentYear)}
+                    disabled={!canWrite}
+                  />
+                  <Field
+                    label="등록연도"
+                    name="registrationYear"
+                    type="number"
+                    defaultValue={String(currentYear)}
+                    disabled={!canWrite}
+                  />
+                </div>
+                <Field
+                  label="등록순번 (비워두면 자동)"
+                  name="registrationSequence"
+                  type="number"
+                  placeholder="자동"
+                  disabled={!canWrite}
+                />
+                <p className="text-xs font-bold leading-5 text-slate-500">
+                  식별자 예시: {generatedCode}
+                </p>
+              </div>
+            </details>
+
             <button
               disabled={!canWrite}
               className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              DB에 학생 등록
+              학생 등록
             </button>
-            <p className="mt-3 text-xs font-bold leading-5 text-slate-500">
-              식별자 예시: {generatedCode}. 순번을 비우면 같은 등록연도 내 마지막 순번 다음 값으로
-              자동 생성됩니다.
-            </p>
           </form>
 
           <section className="space-y-3">

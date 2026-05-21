@@ -84,3 +84,99 @@ Architecture:
 - Dev 2/3 validation: `npm run quality`, `npm run lint -- --no-cache`, `npm run typecheck -- --incremental false`, and `npm run build` passed.
 - Read Claude's blocker list once it finishes.
 - Push `dev` after checks pass, then verify Vercel Preview from the external URL.
+
+### Claude Turn 4 회귀 검토
+
+- Reg#1 (opaque token 2번째 발행 시 portalUrl=null) — Codex가 route.ts에서 fresh 링크 발급 + 기존 PIN 유지 패턴으로 수정 완료. resetPortalPin=true 분기에서만 PIN 회전 + 기타 active 링크 revoke.
+- Reg#2 (0004 NULL expires_at 자동 +730일) — 0004는 production 적용 완료. 사후 검증 쿼리 대기.
+- Reg#3 (/r/[token] dead code) — Codex가 디렉토리 + ParentAccessForm + demo report 상수 + next.config /r 블록 + README 안내 일괄 삭제 완료.
+
+### Ultraplan 결정 사항 (Claude turn 5 + 사용자 결정)
+
+- Cycle 모델 → Stream 모델로 전환 (DEV_CYCLES.md §Streams).
+- 6렌즈 PR self-review checklist 도입 (docs/PR_CHECKLIST.md).
+- 점수 시스템 재설계 결정:
+  - 입력 1-5 · 0.5 단위 (9-point)
+  - 표시 0-100 derive (anchor=60)
+  - 또래 대비는 학생별 on/off
+  - Book level별 ceiling 도입
+  - 차원 6 → 5 압축 (음정/박자/음색/음악성/자세활) — ABRSM 5차원 매핑 + PubMed PMC11496144 빈도 top 5
+
+### Claude Turn 5 자율 진행 작업
+
+- `docs/SCORING_RESEARCH.md` v2 (PubMed 시스템 리뷰, Suzuki↔ABRSM/RCM/ASTA 매핑, Bregman 단계별 timeline, KCI 한국 루브릭 방법론, Prior 시드값 표 v1, Book 1-10 ceiling 설계).
+- `docs/REFERENCE_APPS.md` 1차본 (ClassDojo/Seesaw/하이클래스/MyMusicStaff 비교, Stream 매핑).
+- `docs/PR_CHECKLIST.md` 6렌즈 self-review template.
+- `apps/report-web/supabase/migrations/0005_scoring_v2.sql` 작성 (대기, Codex DB 적용 결정 시).
+- `apps/report-web/src/lib/scoring/priors.ts` Prior 상수 + derive/peerMean/overall 유틸.
+
+### URGENT Queue (Codex 처리 대기)
+
+- DB password 회전 후 새 비번 Vercel env 갱신
+- 0004 NULL row 사후 검증 쿼리 실행 결과
+- supabase npm dep 제거 (옵션 C 동의됨)
+
+### Claude Turn 7 — P0 코드 변경 자율 진행 (사용자 위임)
+
+사용자가 "끝까지 다해 알아서" 위임. Codex는 URGENT 대기 중이므로 P0 코드 변경 7개 항목 Claude가 인계 처리.
+
+- **A2** — `ReportEditor.tsx` 학생 선택 시 별도 "학생 이름" 텍스트 입력 제거 → 선택 select + read-only 카드(이름·연령대) 한 쌍.
+- **A3** — period 선택 시 시작/종료/기간명 inputs 제거 → read-only 카드 + "기간 직접 입력으로 전환" 토글. 직접 입력 모드에선 다시 inputs 노출 + "등록된 기간 선택으로 돌아가기" 토글.
+- **A4** — `teacher/students/page.tsx` 학교명/입학연도/등록연도/등록순번을 `<details>` "학교·등록 정보 (선택)"로 collapse. 기본 폼은 필수 6개만 (이름·생일·학부모·휴대폰뒷4·나이대·현재진도). 학교명 zod schema에서 `min(1)` 제거 → 비우면 `buildStudentCode`가 "STUDIO" fallback.
+- **A6** — `teacher/reports/new/page.tsx` context.ready + (students=[] or periods=[]) 시 ReportEditor 차단 + onboarding 카드 (학생 등록·기간 등록 액션 링크 + ✓ 완료 표시).
+- **C1** — `ReportEditor.tsx` 발행 결과를 `PublishResultModal`로 승격. fixed inset-0 backdrop + 명시 dismiss + sessionStorage 영속화로 새로고침 복구. 카드 dismiss는 "나중에" 또는 "확인 — 학부모에게 전달했어요" 버튼만.
+- **C2** — modal 안에 학부모 전달 메시지 자동 생성 (선생님·학생·기간·링크·PIN·인증 안내). 4-버튼: 카톡/메시지 공유 (Web Share API), 전체 메시지 복사, 링크만 복사, SMS 앱 (`sms:?body=...`). Web Share 미지원 시 자동 clipboard fallback. PIN 표시 시 "이 PIN과 링크는 지금만 표시됩니다" 경고.
+- **C3** — reset 체크박스 라벨 정직성 ("새 링크와 새 PIN을 발급합니다. 기존 학부모에게 전달한 링크와 PIN은 즉시 무효화되니, 학부모가 분실했을 때만 사용해 주세요.")
+
+### Stream B 사전 작업
+
+- `apps/report-web/supabase/migrations/0005_scoring_v2.sql` — students.suzuki_book_level + show_peer_comparison 컬럼. DB 적용 대기.
+- `apps/report-web/src/lib/scoring/priors.ts` — Prior μ 표(Book 1-10 × 5 차원), Book ceiling, deriveDisplayScore, peerMean (Bayesian blend), overallScore. 기존 코드 미연결 (활성화는 Stream B 본 PR).
+
+### 검증
+
+- `npm run typecheck`: PASS
+- `npm run lint`: PASS
+- `npm run build`: PASS (route list `/r` 없음, `/p` only)
+
+### 6렌즈 자가 점검 (Turn 7 P0)
+
+- **L1 (0 data)**: A6로 빈 students/periods 차단. 신규 가입자가 sampleStudent로 위장된 작성 화면 진입 불가. ✓
+- **L2 (반복)**: A2/A3로 학생·기간 선택 시 폼 마찰 줄임. 토요일 5명 작성 시 학생당 추가 클릭 ≥3개 감소. ✓
+- **L3 (lineage)**: A2(학생 이름 derive), A3(period 정보 derive), A4(registrationSequence 자동) 적용. ✓
+- **L4 (모바일)**: 모달은 `inset-0 px-4 py-6` + `max-h-full overflow-auto`로 390px 키보드 시나리오 대응. 버튼은 stack grid로 도달 영역 충분. 자세 확인은 dev 서버에서 검증 필요. ⚠
+- **L5 (복구)**: C1 sessionStorage로 새로고침 복구. 명시 dismiss만 카드 닫음. PIN 분실 경로 보존. ✓
+- **L6 (6개월 후)**: A4 details collapse로 반복 학생 등록 시 인지 부하 ↓. C2 카톡 템플릿 자동 생성으로 매번 발송 문구 작성 마찰 ↓. ✓
+
+### 알려진 후속 (P1 이후)
+
+- L4 dev 서버 실 모바일 viewport 점검 필요
+- 0005 DB 적용 후 점수 schema 재정의 (Stream B 본 PR)
+- A1 대시보드 "오늘 할 일 카드"
+- B1~B6 점수 입력 UX
+- D1~D6 학부모 화면 폴리시
+- E1~E4 운영 후속
+
+### Codex Turn 8 — P0 리뷰 보강 및 커밋 준비
+
+- `ReportEditor.tsx` 발행 결과 sessionStorage에 학생/기간/선생님 snapshot까지 저장하도록 보강. 새 보고서 작성/실패/새로고침에서 이전 링크·PIN이 다른 학생명으로 보이는 문제 방지.
+- 수동 기간 입력 시 `academicPeriodId`를 보내지 않도록 수정. 등록 기간 선택 모드로 돌아갈 때 선택 기간 값을 다시 반영.
+- 학생 변경 및 발행 성공 후 `resetPortalPin` 체크를 자동 해제해 다음 학생/다음 보고서에서 의도치 않게 기존 링크/PIN을 무효화하지 않도록 수정.
+- 발행 결과 모달에 `role="dialog"`, `aria-modal`, label, 초기 focus, Escape 닫기를 추가.
+- 학생 등록 액션에서 선택 입력(학교명/입학연도/등록연도/등록순번)이 비어도 현재연도/STUDIO/자동순번으로 처리되도록 서버 파싱 보강.
+- `0005_scoring_v2.sql`는 DB 적용하지 않고 Stream B 준비물로 유지. partial state 대비 `show_peer_comparison` default/backfill/not-null 보강, constraint idempotency 보강, scoring JSON 변경 문구는 "후속 앱 스키마 변경 계획"으로 정리.
+- Supabase local reset용 빈 `seed.sql` 추가. `.env*.local`과 `supabase/.temp`는 ignore 유지.
+
+### Codex Turn 8 검증
+
+- `git diff --check`: PASS
+- `npm run lint -- --no-cache`: PASS
+- `npm run typecheck -- --incremental false`: PASS
+- `npm run quality`: PASS
+- `npm run build`: PASS
+
+### Codex Turn 8 배포 방침
+
+- Vercel/Supabase CLI는 추가 사용하지 않음.
+- `dev` 브랜치 push 후 GitHub 연동된 Vercel Preview가 자동 배포하는 방식으로 진행.
+- `0005`는 아직 운영 DB에 push하지 않음. 현재 런타임은 0005 컬럼을 사용하지 않으므로 Preview 동작에는 영향 없음.
