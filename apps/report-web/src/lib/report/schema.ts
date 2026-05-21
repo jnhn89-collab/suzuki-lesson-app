@@ -13,6 +13,16 @@ export const scoreSchema = z.object({
   musicality: z.number().int().min(1).max(5),
 });
 
+// Stream B 신 5차원 (0.5 단위 + N/A). 기존 scoreSchema와 병행, 점진 전환 후 교체.
+const scoreV2Field = z.number().multipleOf(0.5).min(1).max(5).nullable();
+export const scoreV2Schema = z.object({
+  intonation: scoreV2Field,
+  rhythm: scoreV2Field,
+  tone: scoreV2Field,
+  musicality: scoreV2Field,
+  technique: scoreV2Field,
+});
+
 export const reportDraftSchema = z
   .object({
     studentName: z.string().trim().min(1).max(80),
